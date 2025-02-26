@@ -1,0 +1,203 @@
+import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' as excel;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import '../models/product.dart';
+
+class ProductsPage extends StatefulWidget {
+  const ProductsPage({super.key});
+
+  @override
+  State<ProductsPage> createState() => _ProductsPageState();
+}
+
+class _ProductsPageState extends State<ProductsPage> {
+  late Box<Product> productBox;
+
+  @override
+  void initState() {
+    super.initState();
+    productBox = Hive.box<Product>('products');
+  }
+
+  Future<void> _exportToExcel() async {
+    final workbook = excel.Workbook();
+    final sheet = workbook.worksheets[0];
+
+    // Set headers
+    sheet.getRangeByName('A1').setText('Name');
+    sheet.getRangeByName('B1').setText('Price');
+    sheet.getRangeByName('C1').setText('Quantity');
+    sheet.getRangeByName('D1').setText('Category');
+
+    // Populate data
+    for (int i = 0; i < productBox.length; i++) {
+      final product = productBox.getAt(i);
+      sheet.getRangeByIndex(i + 2, 1).setText(product?.name);
+      sheet.getRangeByIndex(i + 2, 2).setNumber(product?.price);
+      sheet.getRangeByIndex(i + 2, 3).setNumber(product?.quantity?.toDouble());
+      sheet.getRangeByIndex(i + 2, 4).setText(product?.category);
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final path = '${directory.path}/products.xlsx';
+    final file = File(path);
+    final bytes = workbook.saveAsStream();
+    await file.writeAsBytes(bytes);
+    workbook.dispose();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Exported to $path')),
+    );
+  }
+
+  void _showProductDialog({Product? product}) {
+    final nameController = TextEditingController(text: product?.name ?? '');
+    final priceController =
+        TextEditingController(text: product?.price.toString() ?? '');
+    final quantityController =
+        TextEditingController(text: product?.quantity.toString() ?? '');
+    final categoryController =
+        TextEditingController(text: product?.category ?? '');
+    final imagePath = product?.imagePath ?? 'assets/items/default.png';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xff2a2b38),
+          title: Text(product == null ? 'Add Product' : 'Edit Product',
+              style: const TextStyle(color: Colors.white)),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildInputField('Name', nameController),
+                _buildInputField('Price', priceController, isNumeric: true),
+                _buildInputField('Quantity', quantityController, isNumeric: true),
+                _buildInputField('Category', categoryController),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                final price = double.tryParse(priceController.text) ?? 0.0;
+                final quantity = int.tryParse(quantityController.text) ?? 0;
+                final category = categoryController.text.trim();
+
+                if (name.isNotEmpty && category.isNotEmpty) {
+                  if (product == null) {
+                    productBox.add(Product(
+                      name: name,
+                      price: price,
+                      quantity: quantity,
+                      category: category,
+                      imagePath: imagePath,
+                    ));
+                  } else {
+                    product.name = name;
+                    product.price = price;
+                    product.quantity = quantity;
+                    product.category = category;
+                    product.save();
+                  }
+                  Navigator.pop(context);
+                  setState(() {});
+                }
+              },
+              child: const Text('Save', style: TextStyle(color: Colors.green)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInputField(String label, TextEditingController controller,
+      {bool isNumeric = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.grey),
+          enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.white)),
+          focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.blue)),
+        ),
+      ),
+    );
+  }
+
+  void _deleteProduct(int index) {
+    productBox.deleteAt(index);
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xff1f2029),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            backgroundColor: Colors.green,
+            onPressed: _exportToExcel,
+            child: const Icon(Icons.file_download, color: Colors.white),
+            tooltip: 'Export to Excel',
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            backgroundColor: Colors.blueGrey,
+            onPressed: () => _showProductDialog(),
+            child: const Icon(Icons.add, color: Colors.white),
+            tooltip: 'Add Product',
+          ),
+        ],
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: productBox.length,
+        itemBuilder: (context, index) {
+          final product = productBox.getAt(index);
+          return Card(
+            color: const Color(0xff2a2b38),
+            child: ListTile(
+              leading: CircleAvatar(child: Text('${product?.quantity ?? 0}')),
+              title: Text(product?.name ?? '',
+                  style: const TextStyle(color: Colors.white)),
+              subtitle: Text(
+                '₹ ${product?.price.toStringAsFixed(2)} - ${product?.category}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () => _showProductDialog(product: product),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteProduct(index),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

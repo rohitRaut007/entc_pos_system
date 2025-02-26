@@ -1,0 +1,58 @@
+name: entc_pos_system
+
+description: "A new Flutter project."
+
+# Prevent accidental publishing to pub.dev
+publish_to: 'none'
+
+# Application version
+version: 1.0.0+1
+
+# Dart SDK version
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+
+# Dependencies for your Flutter app
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Hive database for local storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Cupertino Icons for iOS-style icons
+  cupertino_icons: ^1.0.8
+
+# Development-only dependencies (for code generation, testing, and linting)
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Hive code generator
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.7
+
+  # path provider 
+  path_provider: ^2.1.2
+
+
+  #Excel 
+  syncfusion_flutter_xlsio: ^25.1.42
+
+  # Linting package for enforcing good practices
+  flutter_lints: ^5.0.0
+
+flutter:
+  # Enable Material Icons
+  uses-material-design: true
+
+  # Asset paths for images and icons
+  assets:
+    - assets/icons/
+    - assets/items/
+
+# Notes:
+# 1. Ensure assets are placed correctly in the specified directories.
+# 2. After making changes, run the following commands:
+#    flutter clean && flutter pub get
