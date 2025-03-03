@@ -1,10 +1,12 @@
-// home_page.dart
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../services/hive_services.dart';
 import '../widgets/top_menu.dart';
 import '../widgets/category_tab.dart';
 import '../widgets/item_card.dart';
 import '../widgets/item_order.dart';
 import '../widgets/bill_summary.dart';
+import '../models/product.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -16,6 +18,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int activeTabIndex = 0;
   String searchQuery = "";
+
   final List<Map<String, dynamic>> categories = [
     {'icon': 'assets/icons/icon-led.png', 'title': 'LEDs'},
     {'icon': 'assets/icons/icon-wire.png', 'title': 'Wires'},
@@ -23,27 +26,35 @@ class _HomePageState extends State<HomePage> {
     {'icon': 'assets/icons/icon-switch.png', 'title': 'Switches'},
   ];
 
-  final List<Map<String, dynamic>> items = [
-    {'image': 'assets/items/4.png', 'title': 'LED Bulb', 'price': 1.99},
-    {'image': 'assets/items/3.png', 'title': 'Copper Wire', 'price': 10.50},
-    {'image': 'assets/items/2.png', 'title': 'Screwdriver Set', 'price': 15.00},
-    {'image': 'assets/items/1.png', 'title': 'Power Switch', 'price': 5.00},
-  ];
-
   final List<Map<String, dynamic>> orderItems = [];
 
-  void addToOrder(Map<String, dynamic> item, int quantity) {
+  @override
+  void initState() {
+    super.initState();
+    HiveService.init();
+  }
+
+   void printBill() {
+    print("Bill printed successfully!");
+  }
+
+  void addToOrder(Product product, int quantity) {
     setState(() {
-      int index = orderItems.indexWhere((orderItem) => orderItem['title'] == item['title']);
+      int index = orderItems.indexWhere((orderItem) => orderItem['title'] == product.name);
       if (index != -1) {
         orderItems[index]['quantity'] += quantity;
       } else {
-        orderItems.add({...item, 'quantity': quantity});
+        orderItems.add({
+          'image': product.imagePath,
+          'title': product.name,
+          'price': product.price,
+          'quantity': quantity,
+        });
       }
     });
   }
 
-  Future<void> promptForQuantity(Map<String, dynamic> item) async {
+  Future<void> promptForQuantity(Product product) async {
     int quantity = 1;
     await showDialog(
       context: context,
@@ -64,8 +75,14 @@ class _HomePageState extends State<HomePage> {
             ),
             ElevatedButton(
               onPressed: () {
-                addToOrder(item, quantity);
-                Navigator.of(context).pop();
+                if (quantity > 0 && product.quantity >= quantity) {
+                  addToOrder(product, quantity);
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Insufficient stock!")),
+                  );
+                }
               },
               child: const Text("Add"),
             ),
@@ -75,63 +92,88 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  double calculateTotal() {
-    return orderItems.fold(0, (sum, item) => sum + (item['price'] as double) * (item['quantity'] as int));
+   double calculateTotal() {
+    return orderItems.fold(0.0, (sum, item) {
+      final price = (item['price'] as double?) ?? 0.0;
+      final quantity = (item['quantity'] as int?) ?? 0;
+      return sum + price * quantity;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 14,
-          child: Column(
-            children: [
-              TopMenu(title: 'Electronics POS', subTitle: '23 February 2025', action: _searchBar()),
-              CategoryTabs(
-                categories: categories,
-                activeTabIndex: activeTabIndex,
-                onTabChange: (index) => setState(() => activeTabIndex = index),
-              ),
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: (1 / 1.2),
+    return ValueListenableBuilder(
+      valueListenable: HiveService.productsBox.listenable(),
+      builder: (context, Box<Product> box, _) {
+        final products = box.values.where((product) {
+          return product.name.toLowerCase().contains(searchQuery.toLowerCase());
+        }).toList();
+
+        return Row(
+          children: [
+            Expanded(
+              flex: 14,
+              child: Column(
+                children: [
+                  TopMenu(
+                    title: 'Electronics POS',
+                    subTitle: '23 February 2025',
+                    action: _searchBar(),
                   ),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    return ItemCard(
-                      image: items[index]['image'],
-                      title: items[index]['title'],
-                      price: items[index]['price'],
-                      onTap: () => promptForQuantity(items[index]),
-                    );
-                  },
-                ),
+                  CategoryTabs(
+                    categories: categories,
+                    activeTabIndex: activeTabIndex,
+                    onTabChange: (index) => setState(() => activeTabIndex = index),
+                  ),
+                  Expanded(
+                    child: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        childAspectRatio: (1 / 1.2),
+                      ),
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return ItemCard(
+                          image: product.imagePath,
+                          title: product.name,
+                          price: product.price,
+                          onTap: () => promptForQuantity(product),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        Expanded(flex: 1, child: Container()),
-        Expanded(
-          flex: 5,
-          child: Column(
-            children: [
-              const TopMenu(title: 'Order Summary', subTitle: 'Table 1', action: SizedBox()),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: orderItems.length,
-                  itemBuilder: (context, index) {
-                    return ItemOrder(item: orderItems[index]);
-                  },
-                ),
+            ),
+            Expanded(flex: 1, child: Container()),
+            Expanded(
+              flex: 5,
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    child: const Text('Order Summary',
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: orderItems.length,
+                      itemBuilder: (context, index) {
+                        return ItemOrder(item: orderItems[index]);
+                      },
+                    ),
+                  ),
+                  BillSummary(total: calculateTotal(), onPrint: printBill),
+                ],
               ),
-              BillSummary(total: calculateTotal()),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -140,7 +182,11 @@ class _HomePageState extends State<HomePage> {
       width: 300,
       child: TextField(
         onChanged: (value) => setState(() => searchQuery = value),
-        decoration: const InputDecoration(hintText: 'Search...', border: OutlineInputBorder()),
+        style: const TextStyle(color: Colors.white),
+        decoration: const InputDecoration(
+          hintText: 'Search...',
+          border: OutlineInputBorder(),
+        ),
       ),
     );
   }

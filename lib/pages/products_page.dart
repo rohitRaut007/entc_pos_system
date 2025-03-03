@@ -15,6 +15,13 @@ class ProductsPage extends StatefulWidget {
 class _ProductsPageState extends State<ProductsPage> {
   late Box<Product> productBox;
 
+  final List<Map<String, dynamic>> categories = [
+    {'icon': 'assets/icons/icon-led.png', 'title': 'LEDs'},
+    {'icon': 'assets/icons/icon-wire.png', 'title': 'Wires'},
+    {'icon': 'assets/icons/icon-tools.png', 'title': 'Tools'},
+    {'icon': 'assets/icons/icon-switch.png', 'title': 'Switches'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -25,13 +32,11 @@ class _ProductsPageState extends State<ProductsPage> {
     final workbook = excel.Workbook();
     final sheet = workbook.worksheets[0];
 
-    // Set headers
     sheet.getRangeByName('A1').setText('Name');
     sheet.getRangeByName('B1').setText('Price');
     sheet.getRangeByName('C1').setText('Quantity');
     sheet.getRangeByName('D1').setText('Category');
 
-    // Populate data
     for (int i = 0; i < productBox.length; i++) {
       final product = productBox.getAt(i);
       sheet.getRangeByIndex(i + 2, 1).setText(product?.name);
@@ -58,9 +63,7 @@ class _ProductsPageState extends State<ProductsPage> {
         TextEditingController(text: product?.price.toString() ?? '');
     final quantityController =
         TextEditingController(text: product?.quantity.toString() ?? '');
-    final categoryController =
-        TextEditingController(text: product?.category ?? '');
-    final imagePath = product?.imagePath ?? 'assets/items/default.png';
+    String selectedCategory = product?.category ?? categories.first['title'];
 
     showDialog(
       context: context,
@@ -75,7 +78,25 @@ class _ProductsPageState extends State<ProductsPage> {
                 _buildInputField('Name', nameController),
                 _buildInputField('Price', priceController, isNumeric: true),
                 _buildInputField('Quantity', quantityController, isNumeric: true),
-                _buildInputField('Category', categoryController),
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  items: categories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category['title'],
+                      child: Text(category['title']),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      selectedCategory = value;
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    labelStyle: TextStyle(color: Colors.grey),
+                  ),
+                  dropdownColor: const Color(0xff2a2b38),
+                ),
               ],
             ),
           ),
@@ -89,7 +110,10 @@ class _ProductsPageState extends State<ProductsPage> {
                 final name = nameController.text.trim();
                 final price = double.tryParse(priceController.text) ?? 0.0;
                 final quantity = int.tryParse(quantityController.text) ?? 0;
-                final category = categoryController.text.trim();
+                final category = selectedCategory;
+
+                final imagePath = categories
+                    .firstWhere((cat) => cat['title'] == category)['icon'];
 
                 if (name.isNotEmpty && category.isNotEmpty) {
                   if (product == null) {
@@ -105,6 +129,7 @@ class _ProductsPageState extends State<ProductsPage> {
                     product.price = price;
                     product.quantity = quantity;
                     product.category = category;
+                    product.imagePath = imagePath;
                     product.save();
                   }
                   Navigator.pop(context);
@@ -181,6 +206,7 @@ class _ProductsPageState extends State<ProductsPage> {
                 '₹ ${product?.price.toStringAsFixed(2)} - ${product?.category}',
                 style: const TextStyle(color: Colors.grey),
               ),
+
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

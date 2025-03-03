@@ -1,3 +1,5 @@
+// item card
+
 import 'package:flutter/material.dart';
 
 class ItemCard extends StatelessWidget {
@@ -27,7 +29,7 @@ class ItemCard extends StatelessWidget {
             Image.asset(image, height: 90),
             const SizedBox(height: 2),
             Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text("\$${price.toStringAsFixed(2)}"),
+            Text("₹${price.toStringAsFixed(2)}"),
           ],
         ),
       ),
