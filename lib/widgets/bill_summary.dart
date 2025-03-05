@@ -1,15 +1,109 @@
 import 'package:flutter/material.dart';
+import '../models/sales.dart';
+import '../services/hive_services.dart';
 
-class BillSummary extends StatelessWidget {
+class BillSummary extends StatefulWidget {
   final double total;
-  final VoidCallback onPrint;
+  final String customerName = 'rr';
+  final List<Map<String, dynamic>> orderItems;
+  final VoidCallback onOrderCompleted; // Callback for real-time updates
 
-  const BillSummary({super.key, required this.total, required this.onPrint});
+  const BillSummary({
+    super.key,
+    required this.total,
+    // required this.customerName,
+    required this.orderItems,
+    required this.onOrderCompleted,
+  });
+
+  @override
+  State<BillSummary> createState() => _BillSummaryState();
+}
+
+class _BillSummaryState extends State<BillSummary> {
+  bool isPrinting = false;
+
+  Future<void> _handlePrint() async {
+    if (_isInvalidOrder()) return;
+
+    setState(() => isPrinting = true);
+
+    try {
+      await _saveOrderToSales();
+      widget.onOrderCompleted(); // Trigger real-time update
+      _showOrderCompletedDialog();
+    } catch (e) {
+      _showErrorDialog("Failed to save order. Please try again.");
+    } finally {
+      setState(() => isPrinting = false);
+    }
+  }
+
+  bool _isInvalidOrder() {
+    if (widget.customerName.isEmpty) {
+      _showErrorDialog("Customer name cannot be empty.");
+      return true;
+    }
+    if (widget.orderItems.isEmpty) {
+      _showErrorDialog("Order items cannot be empty.");
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _saveOrderToSales() async {
+    final sale = Sale(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      customerName: widget.customerName,
+      items: widget.orderItems.map((item) {
+        return SaleItem(
+          name: item['name']?.toString() ?? 'Unknown',
+          quantity: (item['quantity'] as int?) ?? 0,
+          price: (item['price'] as double?) ?? 0.0,
+        );
+      }).toList(),
+      totalAmount: widget.total,
+      date: DateTime.now(),
+    );
+
+    await HiveService.addSale(sale);
+    print("✅ Sale saved: \${sale.customerName} - ₹\${sale.totalAmount}");
+  }
+
+  void _showOrderCompletedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Order Completed'),
+        content: const Text('The order has been successfully saved.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    print("Rendering BillSummary: total=\$total");
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -19,6 +113,7 @@ class BillSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Total Display
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -28,9 +123,9 @@ class BillSummary extends StatelessWidget {
               ),
               Flexible(
                 child: Text(
-                  "₹\${total.toStringAsFixed(2)}",
+                  "₹${widget.total.toStringAsFixed(2)}",
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -40,8 +135,10 @@ class BillSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+
+          // Print Bill Button
           ElevatedButton(
-            onPressed: onPrint,
+            onPressed: isPrinting ? null : _handlePrint,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
@@ -50,7 +147,16 @@ class BillSummary extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: const Text('Print Bill'),
+            child: isPrinting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text('Print Bill'),
           ),
         ],
       ),

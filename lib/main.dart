@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
 import 'models/order_item.dart';
 import 'models/product.dart';
+import 'models/sales.dart'; // ✅ Import Sale & SaleItem models
 import 'pages/home_page.dart';
 import 'pages/products_page.dart';
 import 'pages/sales_page.dart';
@@ -12,16 +14,41 @@ import 'widgets/side_menu.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive and register adapters
-  await Hive.initFlutter();
-  Hive.registerAdapter(OrderItemAdapter());
-  Hive.registerAdapter(ProductAdapter());
-
-  // Open Hive boxes for storing data
-  await Hive.openBox<OrderItem>('orders');
-  await Hive.openBox<Product>('products'); // ✅ Fixed: Opened the products box
+  await _initHive(); // Initialize Hive storage
 
   runApp(const MyApp());
+}
+
+// Initialize Hive and open all necessary boxes
+Future<void> _initHive() async {
+  try {
+    await Hive.initFlutter();
+
+    // Register Hive Adapters (Prevent Duplicate Registration)
+    if (!Hive.isAdapterRegistered(OrderItemAdapter().typeId)) {
+      Hive.registerAdapter(OrderItemAdapter());
+    }
+    if (!Hive.isAdapterRegistered(ProductAdapter().typeId)) {
+      Hive.registerAdapter(ProductAdapter());
+    }
+    if (!Hive.isAdapterRegistered(SaleAdapter().typeId)) {
+      Hive.registerAdapter(SaleAdapter());
+    }
+    if (!Hive.isAdapterRegistered(SaleItemAdapter().typeId)) {
+      Hive.registerAdapter(SaleItemAdapter());
+    }
+
+    // Open Hive Boxes (Open Once Only)
+    await Future.wait([
+      if (!Hive.isBoxOpen('orders')) Hive.openBox<OrderItem>('orders'),
+      if (!Hive.isBoxOpen('products')) Hive.openBox<Product>('products'),
+      if (!Hive.isBoxOpen('sales')) Hive.openBox<Sale>('sales'),
+    ]);
+
+    debugPrint('✅ Hive successfully initialized.');
+  } catch (e) {
+    debugPrint('❌ Hive initialization error: $e');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -32,7 +59,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'POS Electrical Tools',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 246, 247, 247)),
         useMaterial3: true,
       ),
       home: const MainPage(),
@@ -51,12 +78,12 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   String currentPage = 'Home';
 
+  // Update the active page
   void _setPage(String page) {
-    setState(() {
-      currentPage = page;
-    });
+    setState(() => currentPage = page);
   }
 
+  // Map pages to widgets
   Widget _pageContent() {
     switch (currentPage) {
       case 'Home':
@@ -64,7 +91,7 @@ class _MainPageState extends State<MainPage> {
       case 'Products':
         return const ProductsPage();
       case 'Sales':
-        return const SalesPage();
+        return const SalesPage(); // ✅ Ensure Sales Page is displayed
       case 'Inventory':
         return const InventoryPage();
       case 'Settings':

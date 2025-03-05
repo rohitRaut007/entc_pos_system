@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+
 part 'sales.g.dart';
 
 @HiveType(typeId: 1)
@@ -28,7 +29,7 @@ class Sale extends HiveObject {
 }
 
 @HiveType(typeId: 2)
-class SaleItem {
+class SaleItem extends HiveObject {
   @HiveField(0)
   final String name;
 
@@ -43,4 +44,6 @@ class SaleItem {
     required this.quantity,
     required this.price,
   });
+
+  double get totalPrice => quantity * price; // ✅ Helper method for item total
 }

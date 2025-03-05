@@ -167,7 +167,19 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
-                  BillSummary(total: calculateTotal(), onPrint: printBill),
+                  BillSummary(
+                      total: calculateTotal(),                // Dynamically calculated total
+                      // customerName: 'customerName',             // Live customer name
+                      orderItems: orderItems,                 // Live order data
+                      onOrderCompleted: () {
+                        setState(() {
+                          orderItems.clear();                 // Clear cart after order
+                          // customerName = '';                  // Reset customer name
+                        });
+                        print("✅ Order completed and UI updated!");
+                      },
+                    ),
+
                 ],
               ),
             ),

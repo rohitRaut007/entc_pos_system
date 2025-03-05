@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as excel;
 import 'package:path_provider/path_provider.dart';
-
 import '../models/sales.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -19,14 +19,15 @@ class _SalesPageState extends State<SalesPage> {
   @override
   void initState() {
     super.initState();
-    _openHiveBox();
+    _openSalesBox();
   }
 
-  Future<void> _openHiveBox() async {
+  Future<void> _openSalesBox() async {
     salesBox = await Hive.openBox<Sale>('sales');
     setState(() {});
   }
 
+  // Export sales data to Excel
   Future<void> _exportSalesToExcel() async {
     if (!salesBox.isOpen || salesBox.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,44 +36,63 @@ class _SalesPageState extends State<SalesPage> {
       return;
     }
 
-    final workbook = excel.Workbook();
-    final sheet = workbook.worksheets.addWithName('Sales Report');
+    try {
+      final workbook = excel.Workbook();
+      final sheet = workbook.worksheets.addWithName('Sales Report');
 
-    sheet.getRangeByName('A1').setText('Customer Name');
-    sheet.getRangeByName('B1').setText('Total Amount');
-    sheet.getRangeByName('C1').setText('Date');
+      // Header row
+      final headers = ['Customer Name', 'Total Amount', 'Date', 'Items'];
+      for (var i = 0; i < headers.length; i++) {
+        sheet.getRangeByIndex(1, i + 1).setText(headers[i]);
+      }
 
-    for (var i = 0; i < salesBox.length; i++) {
-      final sale = salesBox.getAt(i);
-      final row = i + 2;
+      for (var i = 0; i < salesBox.length; i++) {
+        final sale = salesBox.getAt(i);
+        if (sale == null) continue;
 
-      sheet.getRangeByName('A$row').setText(sale?.customerName ?? '');
-      sheet.getRangeByName('B$row').setNumber(sale?.totalAmount ?? 0.0);
-      sheet.getRangeByName('C$row').setText(sale?.date.toString() ?? '');
+        final row = i + 2;
+
+        sheet.getRangeByIndex(row, 1).setText(sale.customerName);
+        sheet.getRangeByIndex(row, 2).setNumber(sale.totalAmount);
+        sheet.getRangeByIndex(row, 3).setText(sale.date.toString());
+
+        final items = sale.items.map((item) {
+          return '${item.name} (x${item.quantity}) - ₹${item.price.toStringAsFixed(2)}';
+        }).join(', ');
+
+        sheet.getRangeByIndex(row, 4).setText(items);
+      }
+
+      final bytes = workbook.saveAsStream();
+      workbook.dispose();
+
+      final directory = await getDownloadsDirectory();
+      final path = '${directory?.path}/sales_report.xlsx';
+      final file = File(path);
+
+      await file.writeAsBytes(bytes);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✅ Sales exported to: $path')),
+      );
+    } catch (e) {
+      debugPrint('❌ Excel export error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to export sales data.')),
+      );
     }
-
-    final bytes = workbook.saveAsStream();
-    workbook.dispose();
-
-    final directory = await getDownloadsDirectory();
-    final path = '${directory?.path}/sales_report.xlsx';
-    final file = File(path);
-
-    await file.writeAsBytes(bytes);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Sales exported to: $path')),
-    );
   }
 
+  // Get the correct directory based on platform
   Future<Directory?> getDownloadsDirectory() async {
-    if (Platform.isWindows) {
+    if (Platform.isAndroid || Platform.isIOS) {
+      return await getApplicationDocumentsDirectory();
+    } else if (Platform.isWindows) {
       return Directory('${Platform.environment['USERPROFILE']}\Downloads');
     } else if (Platform.isLinux || Platform.isMacOS) {
-      return Directory('/home/${Platform.environment['USER']}');
-    } else {
-      return getApplicationDocumentsDirectory();
+      return Directory('/home/${Platform.environment['USER']}/Downloads');
     }
+    return null;
   }
 
   @override
@@ -87,19 +107,43 @@ class _SalesPageState extends State<SalesPage> {
           ),
         ],
       ),
-      body: salesBox.isEmpty
-          ? const Center(child: Text('No Sales Data'))
-          : ListView.builder(
-              itemCount: salesBox.length,
-              itemBuilder: (context, index) {
-                final sale = salesBox.getAt(index);
-                return ListTile(
-                  title: Text(sale?.customerName ?? 'Unknown Customer'),
-                  subtitle: Text('Amount: \$${sale?.totalAmount?.toStringAsFixed(2)}'),
-                  trailing: Text(sale?.date.toString() ?? ''),
-                );
-              },
-            ),
+      body: ValueListenableBuilder(
+        valueListenable: Hive.box<Sale>('sales').listenable(),
+        builder: (context, Box<Sale> box, _) {
+          if (box.isEmpty) {
+            return const Center(child: Text('No Sales Data'));
+          }
+
+          return ListView.builder(
+            itemCount: box.length,
+            itemBuilder: (context, index) {
+              final sale = box.getAt(index);
+              if (sale == null) return const SizedBox.shrink();
+
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: ListTile(
+                  title: Text(sale.customerName),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Amount: ₹${sale.totalAmount.toStringAsFixed(2)}'),
+                      Text('Date: ${sale.date.toLocal()}'),
+                      Text('Items: ${_formatItems(sale.items)}'),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
+  }
+
+  // Helper function to format sale items for display
+  String _formatItems(List<SaleItem> items) {
+    if (items.isEmpty) return 'No items';
+    return items.map((item) => '${item.name} (x${item.quantity})').join(', ');
   }
 }
