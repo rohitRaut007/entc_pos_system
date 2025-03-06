@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'sales.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 3) // Ensure a unique and consistent typeId
 class Sale extends HiveObject {
   @HiveField(0)
   final String id;
@@ -28,7 +28,7 @@ class Sale extends HiveObject {
   });
 }
 
-@HiveType(typeId: 2)
+@HiveType(typeId: 4) // Ensure a unique and consistent typeId
 class SaleItem extends HiveObject {
   @HiveField(0)
   final String name;
@@ -44,6 +44,4 @@ class SaleItem extends HiveObject {
     required this.quantity,
     required this.price,
   });
-
-  double get totalPrice => quantity * price; // ✅ Helper method for item total
 }

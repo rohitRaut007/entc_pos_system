@@ -7,6 +7,7 @@ import '../widgets/item_card.dart';
 import '../widgets/item_order.dart';
 import '../widgets/bill_summary.dart';
 import '../models/product.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -34,7 +35,7 @@ class _HomePageState extends State<HomePage> {
     HiveService.init();
   }
 
-   void printBill() {
+  void printBill() {
     print("Bill printed successfully!");
   }
 
@@ -92,7 +93,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-   double calculateTotal() {
+  double calculateTotal() {
     return orderItems.fold(0.0, (sum, item) {
       final price = (item['price'] as double?) ?? 0.0;
       final quantity = (item['quantity'] as int?) ?? 0;
@@ -117,8 +118,9 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   TopMenu(
                     title: 'Electronics POS',
-                    subTitle: '23 February 2025',
+                    subTitle: DateFormat('d MMMM y').format(DateTime.now()),
                     action: _searchBar(),
+                  
                   ),
                   CategoryTabs(
                     categories: categories,
@@ -168,18 +170,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   BillSummary(
-                      total: calculateTotal(),                // Dynamically calculated total
-                      // customerName: 'customerName',             // Live customer name
-                      orderItems: orderItems,                 // Live order data
-                      onOrderCompleted: () {
-                        setState(() {
-                          orderItems.clear();                 // Clear cart after order
-                          // customerName = '';                  // Reset customer name
-                        });
-                        print("✅ Order completed and UI updated!");
-                      },
-                    ),
-
+                    total: calculateTotal(),
+                    orderItems: orderItems,
+                    onOrderCompleted: () {
+                      setState(() {
+                        orderItems.clear();
+                      });
+                      print("✅ Order completed and UI updated!");
+                    },
+                  ),
                 ],
               ),
             ),

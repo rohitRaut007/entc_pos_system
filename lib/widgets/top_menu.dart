@@ -23,9 +23,9 @@ class TopMenu extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text(title, style: const TextStyle(fontSize: 24,color: Colors.white, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text(subTitle, style: const TextStyle(fontSize: 16)),
+              Text(subTitle, style: const TextStyle(fontSize: 16,color: Colors.white)),
             ],
           ),
           action,

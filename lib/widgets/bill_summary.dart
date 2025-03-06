@@ -4,14 +4,12 @@ import '../services/hive_services.dart';
 
 class BillSummary extends StatefulWidget {
   final double total;
-  final String customerName = 'rr';
   final List<Map<String, dynamic>> orderItems;
-  final VoidCallback onOrderCompleted; // Callback for real-time updates
+  final VoidCallback onOrderCompleted;
 
   const BillSummary({
     super.key,
     required this.total,
-    // required this.customerName,
     required this.orderItems,
     required this.onOrderCompleted,
   });
@@ -40,10 +38,6 @@ class _BillSummaryState extends State<BillSummary> {
   }
 
   bool _isInvalidOrder() {
-    if (widget.customerName.isEmpty) {
-      _showErrorDialog("Customer name cannot be empty.");
-      return true;
-    }
     if (widget.orderItems.isEmpty) {
       _showErrorDialog("Order items cannot be empty.");
       return true;
@@ -52,22 +46,29 @@ class _BillSummaryState extends State<BillSummary> {
   }
 
   Future<void> _saveOrderToSales() async {
-    final sale = Sale(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      customerName: widget.customerName,
-      items: widget.orderItems.map((item) {
-        return SaleItem(
-          name: item['name']?.toString() ?? 'Unknown',
-          quantity: (item['quantity'] as int?) ?? 0,
-          price: (item['price'] as double?) ?? 0.0,
-        );
-      }).toList(),
-      totalAmount: widget.total,
-      date: DateTime.now(),
-    );
+    try {
+      final sale = Sale(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        customerName: "Guest", // Static customer name (or pass dynamically)
+        items: widget.orderItems.map((item) {
+          return SaleItem(
+            name: item['title']?.toString() ?? 'Unknown',
+            quantity: (item['quantity'] as int?) ?? 0,
+            price: (item['price'] as num?)?.toDouble() ?? 0.0,
+          );
+        }).toList(),
+        totalAmount: widget.total,
+        date: DateTime.now(),
+      );
 
-    await HiveService.addSale(sale);
-    print("✅ Sale saved: \${sale.customerName} - ₹\${sale.totalAmount}");
+      print("📝 Saving sale: $sale");
+      await HiveService.addSale(sale);
+      print("✅ Sale saved: ${sale.id} - ₹${sale.totalAmount}");
+    } catch (e, stack) {
+      print("❌ Error saving sale: $e");
+      print(stack);
+      throw e;
+    }
   }
 
   void _showOrderCompletedDialog() {

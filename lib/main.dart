@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'POS Electrical Tools',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 246, 247, 247)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 216, 190, 154)),
         useMaterial3: true,
       ),
       home: const MainPage(),
