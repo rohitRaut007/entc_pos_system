@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // Hive
 import 'package:hive/hive.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as excel;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -14,7 +16,6 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage> {
   late Box<Product> productBox;
-  String searchQuery = "";
 
   @override
   void initState() {
@@ -22,107 +23,146 @@ class _InventoryPageState extends State<InventoryPage> {
     productBox = Hive.box<Product>('products');
   }
 
-  List<Product> getFilteredProducts() {
-    if (searchQuery.isEmpty) {
-      return productBox.values.toList();
-    }
-    return productBox.values
-        .where((product) => product.name.toLowerCase().contains(searchQuery.toLowerCase()))
-        .toList();
-  }
-
-  Future<void> exportToExcel() async {
+  Future<void> _exportInventoryToExcel() async {
     final workbook = excel.Workbook();
-    final sheet = workbook.worksheets[0];
+    final sheet = workbook.worksheets.addWithName('Inventory');
 
-    // Set headers
-    sheet.getRangeByName('A1').setText('Name');
-    sheet.getRangeByName('B1').setText('Price');
-    sheet.getRangeByName('C1').setText('Quantity');
-    sheet.getRangeByName('D1').setText('Category');
+    sheet.getRangeByName('A1').setText('Product Name');
+    sheet.getRangeByName('B1').setText('Category');
+    sheet.getRangeByName('C1').setText('Price');
+    sheet.getRangeByName('D1').setText('Quantity');
+    sheet.getRangeByName('E1').setText('Stock Status');
 
-    // Populate data
-    final products = productBox.values.toList();
-    for (int i = 0; i < products.length; i++) {
-      final product = products[i];
-      sheet.getRangeByIndex(i + 2, 1).setText(product.name);
-      sheet.getRangeByIndex(i + 2, 2).setNumber(product.price);
-      sheet.getRangeByIndex(i + 2, 3).setNumber(product.quantity.toDouble());
-      sheet.getRangeByIndex(i + 2, 4).setText(product.category);
+    for (var i = 0; i < productBox.length; i++) {
+      final product = productBox.getAt(i);
+      final row = i + 2;
+      sheet.getRangeByName('A$row').setText(product?.name ?? '');
+      sheet.getRangeByName('B$row').setText(product?.category ?? '');
+      sheet.getRangeByName('C$row').setNumber(product?.price ?? 0.0);
+      sheet.getRangeByName('D$row').setNumber((product?.quantity ?? 0) as double?);
+      sheet.getRangeByName('E$row').setText(product!.quantity > 0 ? 'In Stock' : 'Out of Stock');
     }
 
-    final List<int> bytes = workbook.saveAsStream();
+    final bytes = workbook.saveAsStream();
     workbook.dispose();
 
-    final directory = await getApplicationDocumentsDirectory();
-    final path = '${directory.path}/Inventory.xlsx';
+    final directory = await getDownloadsDirectory();
+    final path = '${directory?.path}/inventory_export.xlsx';
     final file = File(path);
-    await file.writeAsBytes(bytes, flush: true);
+    await file.writeAsBytes(bytes);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Exported to: $path')),
+      SnackBar(content: Text('Inventory exported to: $path')),
+    );
+  }
+
+  void _deleteProduct(int index) {
+    productBox.deleteAt(index);
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Product deleted successfully.')),
+    );
+  }
+
+  void _editProduct(int index, Product product) {
+    productBox.putAt(index, product);
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Product updated successfully.')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredProducts = getFilteredProducts();
-
     return Scaffold(
-      backgroundColor: const Color(0xff1f2029),
       appBar: AppBar(
-        backgroundColor: const Color(0xff2a2b38),
-        title: const Text('Inventory', style: TextStyle(color: Colors.white)),
+        title: const Text('Inventory Management'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.file_download, color: Colors.white),
-            onPressed: exportToExcel,
+            icon: const Icon(Icons.file_download),
+            onPressed: _exportInventoryToExcel,
+            tooltip: 'Export to Excel',
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Search products...',
-                hintStyle: TextStyle(color: Colors.white54),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
+      body: ValueListenableBuilder(
+        valueListenable: productBox.listenable(),
+        builder: (context, Box<Product> box, _) {
+          if (box.isEmpty) {
+            return const Center(child: Text('No products available'));
+          }
+
+          int totalProducts = box.length;
+          int totalStock = box.values.fold(0, (sum, item) => sum + item.quantity);
+          double totalValue = box.values.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Card(
+                  child: ListTile(
+                    title: const Text('Inventory Summary'),
+                    subtitle: Text('Total Products: $totalProducts\nTotal Stock: $totalStock\nTotal Value: ₹${totalValue.toStringAsFixed(2)}'),
+                  ),
                 ),
               ),
-              onChanged: (value) {
-                setState(() => searchQuery = value);
-              },
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredProducts.length,
-              itemBuilder: (context, index) {
-                final product = filteredProducts[index];
-                return Card(
-                  color: const Color(0xff2a2b38),
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blueGrey,
-                      child: Text('${product.quantity}', style: const TextStyle(color: Colors.white)),
-                    ),
-                    title: Text(product.name, style: const TextStyle(color: Colors.white)),
-                    subtitle: Text(
-                      '₹ ${product.price.toStringAsFixed(2)} - ${product.category}',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+              Expanded(
+                child: ListView.builder(
+                  itemCount: box.length,
+                  itemBuilder: (context, index) {
+                    final product = box.getAt(index);
+                    return Slidable(
+                      endActionPane: ActionPane(
+                        motion: const ScrollMotion(),
+                        children: [
+                          SlidableAction(
+                            onPressed: (_) => _editProduct(index, product!),
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: 'Edit',
+                          ),
+                          SlidableAction(
+                            onPressed: (_) => _deleteProduct(index),
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Delete',
+                          ),
+                        ],
+                      ),
+                      child: Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: product!.quantity > 0 ? Colors.green : Colors.red,
+                            child: Text('${product.quantity}'),
+                          ),
+                          title: Text(product.name),
+                          subtitle: Text('${product.category} - ₹${product.price.toStringAsFixed(2)}'),
+                          trailing: product.quantity < 5
+                              ? const Icon(Icons.warning, color: Colors.orange)
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
+  }
+}
+
+Future<Directory?> getDownloadsDirectory() async {
+  if (Platform.isWindows) {
+    return Directory('${Platform.environment['USERPROFILE']}\Downloads');
+  } else if (Platform.isLinux || Platform.isMacOS) {
+    return Directory('/home/${Platform.environment['USER']}');
+  } else {
+    return getApplicationDocumentsDirectory();
   }
 }

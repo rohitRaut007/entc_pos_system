@@ -83,7 +83,7 @@ class _ProductsPageState extends State<ProductsPage> {
                   items: categories.map((category) {
                     return DropdownMenuItem<String>(
                       value: category['title'],
-                      child: Text(category['title']),
+                      child: Text(category['title'],style:const TextStyle(color: Colors.white),),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -204,7 +204,7 @@ class _ProductsPageState extends State<ProductsPage> {
                   style: const TextStyle(color: Colors.white)),
               subtitle: Text(
                 '₹ ${product?.price.toStringAsFixed(2)} - ${product?.category}',
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: Color.fromARGB(255, 251, 250, 250)),
               ),
 
               trailing: Row(

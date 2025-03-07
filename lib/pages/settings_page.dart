@@ -15,21 +15,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _isDarkMode = false;
-
-  // Toggle Theme
-  void _toggleTheme() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-    // Implement theme switching logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isDarkMode ? 'Dark Mode Enabled' : 'Light Mode Enabled'),
-      ),
-    );
-  }
-
   // Export Products and Sales to Excel
   Future<void> _exportDataToExcel() async {
     final productBox = Hive.box<Product>('products');
@@ -51,7 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
       productSheet.getRangeByName('A$row').setText(product?.name ?? '');
       productSheet.getRangeByName('B$row').setText(product?.category ?? '');
       productSheet.getRangeByName('C$row').setNumber(product?.price ?? 0.0);
-      // productSheet.getRangeByName('D$row').setNumber(product?.quantity ?? 0);
+      productSheet.getRangeByName('D$row').setNumber((product?.quantity ?? 0) as double?);
     }
 
     // Write Sales Data
@@ -92,19 +77,13 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _isDarkMode ? const Color(0xff1f2029) : Colors.white,
       appBar: AppBar(
-        backgroundColor: _isDarkMode ? const Color(0xff2a2b38) : Colors.blue,
+        backgroundColor: Colors.blue,
         title: const Text('Settings', style: TextStyle(color: Colors.white)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          _buildSettingsItem(
-            icon: Icons.dark_mode,
-            title: 'Toggle Theme',
-            onTap: _toggleTheme,
-          ),
           _buildSettingsItem(
             icon: Icons.file_download,
             title: 'Export Data to Excel',
@@ -119,7 +98,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildSettingsItem(
             icon: Icons.info,
             title: 'About App',
-            onTap: () => _showAboutDialog(),
+            onTap: _showAboutDialog,
           ),
         ],
       ),
@@ -129,10 +108,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSettingsItem(
       {required IconData icon, required String title, required VoidCallback onTap}) {
     return Card(
-      color: _isDarkMode ? const Color(0xff2a2b38) : Colors.grey[200],
+      color: Colors.grey[200],
       child: ListTile(
-        leading: Icon(icon, color: _isDarkMode ? Colors.white : Colors.black),
-        title: Text(title, style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+        leading: Icon(icon, color: Colors.black),
+        title: Text(title, style: const TextStyle(color: Colors.black)),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),
@@ -157,7 +136,7 @@ class _SettingsPageState extends State<SettingsPage> {
 // Helper function to get the Downloads directory
 Future<Directory?> getDownloadsDirectory() async {
   if (Platform.isWindows) {
-    return Directory('${Platform.environment['USERPROFILE']}\\Downloads');
+    return Directory('${Platform.environment['USERPROFILE']}\Downloads');
   } else if (Platform.isLinux || Platform.isMacOS) {
     return Directory('/home/${Platform.environment['USER']}');
   } else {
