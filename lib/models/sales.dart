@@ -11,17 +11,21 @@ class Sale extends HiveObject {
   final String customerName;
 
   @HiveField(2)
-  final List<SaleItem> items;
+  final String mobileNumber;
 
   @HiveField(3)
-  final double totalAmount;
+  final List<SaleItem> items;
 
   @HiveField(4)
+  final double totalAmount;
+
+  @HiveField(5)
   final DateTime date;
 
   Sale({
     required this.id,
     required this.customerName,
+    required this.mobileNumber,
     required this.items,
     required this.totalAmount,
     required this.date,

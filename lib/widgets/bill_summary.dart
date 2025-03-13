@@ -21,25 +21,49 @@ class BillSummary extends StatefulWidget {
 class _BillSummaryState extends State<BillSummary> {
   bool isPrinting = false;
 
+  final TextEditingController _customerNameController = TextEditingController();
+  final TextEditingController _mobileNumberController = TextEditingController();
+
+  @override
+  void dispose() {
+    _customerNameController.dispose();
+    _mobileNumberController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handlePrint() async {
+    FocusScope.of(context).unfocus();
+
     if (_isInvalidOrder()) return;
 
-    setState(() => isPrinting = true);
+    if (mounted) setState(() => isPrinting = true);
 
     try {
       await _saveOrderToSales();
-      widget.onOrderCompleted(); // Trigger real-time update
+      widget.onOrderCompleted();
       _showOrderCompletedDialog();
     } catch (e) {
       _showErrorDialog("Failed to save order. Please try again.");
     } finally {
-      setState(() => isPrinting = false);
+      if (mounted) setState(() => isPrinting = false);
     }
   }
 
   bool _isInvalidOrder() {
     if (widget.orderItems.isEmpty) {
       _showErrorDialog("Order items cannot be empty.");
+      return true;
+    }
+    if (widget.total <= 0) {
+      _showErrorDialog("Total amount must be greater than zero.");
+      return true;
+    }
+    if (_customerNameController.text.trim().isEmpty) {
+      _showErrorDialog("Customer name cannot be empty.");
+      return true;
+    }
+    if (!RegExp(r'^[0-9]{10}$').hasMatch(_mobileNumberController.text.trim())) {
+      _showErrorDialog("Please enter a valid 10-digit mobile number.");
       return true;
     }
     return false;
@@ -49,7 +73,8 @@ class _BillSummaryState extends State<BillSummary> {
     try {
       final sale = Sale(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        customerName: "Guest", // Static customer name (or pass dynamically)
+        customerName: _customerNameController.text.trim(),
+        mobileNumber: _mobileNumberController.text.trim(),
         items: widget.orderItems.map((item) {
           return SaleItem(
             name: item['title']?.toString() ?? 'Unknown',
@@ -63,7 +88,7 @@ class _BillSummaryState extends State<BillSummary> {
 
       print("📝 Saving sale: $sale");
       await HiveService.addSale(sale);
-      print("✅ Sale saved: ${sale.id} - ₹${sale.totalAmount}");
+      print("✅ Sale saved: \${sale.id} - ₹\${sale.totalAmount}");
     } catch (e, stack) {
       print("❌ Error saving sale: $e");
       print(stack);
@@ -114,7 +139,35 @@ class _BillSummaryState extends State<BillSummary> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Total Display
+          TextField(
+            controller: _customerNameController,
+            decoration: InputDecoration(
+              labelText: 'Customer Name',
+              labelStyle: const TextStyle(color: Colors.white),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+
+          TextField(
+            controller: _mobileNumberController,
+            keyboardType: TextInputType.phone,
+            maxLength: 10,
+            decoration: InputDecoration(
+              labelText: 'Mobile Number',
+              labelStyle: const TextStyle(color: Colors.white),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              counterText: "",
+            ),
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -137,7 +190,6 @@ class _BillSummaryState extends State<BillSummary> {
           ),
           const SizedBox(height: 16),
 
-          // Print Bill Button
           ElevatedButton(
             onPressed: isPrinting ? null : _handlePrint,
             style: ElevatedButton.styleFrom(
