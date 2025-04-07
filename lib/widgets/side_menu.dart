@@ -23,6 +23,7 @@ class SideMenu extends StatelessWidget {
           _menuItem('Products', Icons.inventory),
           _menuItem('Sales', Icons.attach_money),
           _menuItem('Inventory', Icons.storage),
+          _menuItem('Invoice', Icons.picture_as_pdf),
           _menuItem('Settings', Icons.settings),
         ],
       ),

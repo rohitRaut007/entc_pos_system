@@ -1,47 +1,50 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'sales.dart';
+part of 'invoice_data.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class SaleAdapter extends TypeAdapter<Sale> {
+class InvoiceDataAdapter extends TypeAdapter<InvoiceData> {
   @override
-  final int typeId = 5;
+  final int typeId = 10;
 
   @override
-  Sale read(BinaryReader reader) {
+  InvoiceData read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Sale(
-      id: fields[0] as String,
-      customerName: fields[1] as String,
-      mobileNumber: fields[2] as String,
-      items: (fields[3] as List).cast<SaleItem>(),
-      totalAmount: fields[4] as double,
-      date: fields[5] as DateTime,
+    return InvoiceData(
+      invoiceNumber: fields[0] as String,
+      buyerName: fields[1] as String,
+      buyerMobile: fields[2] as String,
+      buyerGst: fields[3] as String,
+      date: fields[4] as DateTime,
+      items: (fields[5] as List).cast<InvoiceItem>(),
+      isQuotation: fields[6] as bool,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Sale obj) {
+  void write(BinaryWriter writer, InvoiceData obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
-      ..write(obj.id)
+      ..write(obj.invoiceNumber)
       ..writeByte(1)
-      ..write(obj.customerName)
+      ..write(obj.buyerName)
       ..writeByte(2)
-      ..write(obj.mobileNumber)
+      ..write(obj.buyerMobile)
       ..writeByte(3)
-      ..write(obj.items)
+      ..write(obj.buyerGst)
       ..writeByte(4)
-      ..write(obj.totalAmount)
+      ..write(obj.date)
       ..writeByte(5)
-      ..write(obj.date);
+      ..write(obj.items)
+      ..writeByte(6)
+      ..write(obj.isQuotation);
   }
 
   @override
@@ -50,38 +53,41 @@ class SaleAdapter extends TypeAdapter<Sale> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SaleAdapter &&
+      other is InvoiceDataAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
 
-class SaleItemAdapter extends TypeAdapter<SaleItem> {
+class InvoiceItemAdapter extends TypeAdapter<InvoiceItem> {
   @override
-  final int typeId = 4;
+  final int typeId = 11;
 
   @override
-  SaleItem read(BinaryReader reader) {
+  InvoiceItem read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return SaleItem(
+    return InvoiceItem(
       name: fields[0] as String,
       quantity: fields[1] as int,
       price: fields[2] as double,
+      gstRate: fields[3] as double,
     );
   }
 
   @override
-  void write(BinaryWriter writer, SaleItem obj) {
+  void write(BinaryWriter writer, InvoiceItem obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
       ..write(obj.quantity)
       ..writeByte(2)
-      ..write(obj.price);
+      ..write(obj.price)
+      ..writeByte(3)
+      ..write(obj.gstRate);
   }
 
   @override
@@ -90,7 +96,7 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SaleItemAdapter &&
+      other is InvoiceItemAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -2,11 +2,11 @@ import 'package:hive/hive.dart';
 
 part 'sales.g.dart';
 
-@HiveType(typeId: 3) // Ensure a unique and consistent typeId
+@HiveType(typeId: 5) // Ensure a unique and consistent typeId
 class Sale extends HiveObject {
   @HiveField(0)
   final String id;
-
+  
   @HiveField(1)
   final String customerName;
 

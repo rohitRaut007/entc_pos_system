@@ -8,6 +8,7 @@ import '../widgets/item_order.dart';
 import '../widgets/bill_summary.dart';
 import '../models/product.dart';
 import 'package:intl/intl.dart';
+import '../models/product.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -32,10 +33,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    HiveService.init();
+    // HiveService.init();
   }
 
   void addToOrder(Product product, int quantity) {
+    print("Adding to order: Product: ${product.name}, Quantity: $quantity");
+    print("Product name type: ${product.name.runtimeType}");
+
     setState(() {
       int index = orderItems.indexWhere((orderItem) => orderItem['title'] == product.name);
       if (index != -1) {
@@ -43,12 +47,13 @@ class _HomePageState extends State<HomePage> {
       } else {
         orderItems.add({
           'image': product.imagePath,
-          'title': product.name,
-          'price': product.price,
+          'title': product.name.toString(), // Ensure it's a String
+          'price': product.price.toDouble(), // Ensure it's a double
           'quantity': quantity,
         });
       }
     });
+    print("Current orderItems: $orderItems");
   }
 
   Future<void> promptForQuantity(Product product) async {
@@ -95,6 +100,7 @@ class _HomePageState extends State<HomePage> {
         orderItems[index]['quantity'] = newQuantity;
       }
     });
+    print("Updated orderItems: $orderItems");
   }
 
   double calculateTotal() {
@@ -110,8 +116,14 @@ class _HomePageState extends State<HomePage> {
     return ValueListenableBuilder(
       valueListenable: HiveService.productsBox.listenable(),
       builder: (context, Box<Product> box, _) {
-        final products = box.values.where((product) {
-          return product.name.toLowerCase().contains(searchQuery.toLowerCase());
+        final products = box.values.map((p) {
+          return Product(
+            name: p.name is String ? p.name : p.name.toString(), // Force to String
+            imagePath: p.imagePath,
+            price: p.price.toDouble(),
+            category: p.category,
+            quantity: p.quantity,
+          );
         }).toList();
 
         return Row(
@@ -185,7 +197,7 @@ class _HomePageState extends State<HomePage> {
                     total: calculateTotal(),
                     orderItems: orderItems,
                     onOrderCompleted: () {
-                      setState(orderItems.clear);
+                      setState(() => orderItems.clear());
                       print("✅ Order completed and UI updated!");
                     },
                   ),
