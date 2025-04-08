@@ -20,7 +20,7 @@ class ItemOrder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -49,12 +49,12 @@ class ItemOrder extends StatelessWidget {
             child: Text(
               item['title'] ?? 'Unknown Item',
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
               overflow: TextOverflow.ellipsis,
-              maxLines: 1,
+              maxLines: 3,
             ),
           ),
           Row(
@@ -74,7 +74,7 @@ class ItemOrder extends StatelessWidget {
                 child: Text(
                   '${item['quantity'] ?? 0}',
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -86,14 +86,14 @@ class ItemOrder extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 5),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '₹${item['price'] ?? 0.0}',
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),

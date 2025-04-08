@@ -163,9 +163,9 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            Expanded(flex: 1, child: Container()),
+           Expanded(flex: 0, child: SizedBox(width: 12)),
             Expanded(
-              flex: 6,
+              flex: 7,
               child: Column(
                 children: [
                   Container(
@@ -179,27 +179,35 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: orderItems.length,
-                      itemBuilder: (context, index) {
-                        return ItemOrder(
-                          item: orderItems[index],
-                          onDelete: () => updateQuantity(index, 0),
-                          onIncrease: () => updateQuantity(index, orderItems[index]['quantity'] + 1),
-                          onDecrease: () => updateQuantity(index, orderItems[index]['quantity'] - 1),
-                          onQuantityChange: (newQuantity) => updateQuantity(index, newQuantity),
-                        );
-                      },
+                   // ✅ Scrollable order list in expanded container
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: ListView.builder(
+                          itemCount: orderItems.length,
+                          itemBuilder: (context, index) {
+                            return ItemOrder(
+                              item: orderItems[index],
+                              onDelete: () => updateQuantity(index, 0),
+                              onIncrease: () => updateQuantity(index, orderItems[index]['quantity'] + 1),
+                              onDecrease: () => updateQuantity(index, orderItems[index]['quantity'] - 1),
+                              onQuantityChange: (newQuantity) => updateQuantity(index, newQuantity),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
-                  BillSummary(
-                    total: calculateTotal(),
-                    orderItems: orderItems,
-                    onOrderCompleted: () {
-                      setState(() => orderItems.clear());
-                      print("✅ Order completed and UI updated!");
-                    },
+                    // ✅ BillSummary stays pinned at bottom
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: BillSummary(
+                        total: calculateTotal(),
+                        orderItems: orderItems,
+                        onOrderCompleted: () {
+                          setState(() => orderItems.clear());
+                          print("✅ Order completed and UI updated!");
+                        },
+                      )
                   ),
                 ],
               ),
