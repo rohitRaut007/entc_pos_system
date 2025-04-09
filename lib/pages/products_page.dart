@@ -16,11 +16,20 @@ class _ProductsPageState extends State<ProductsPage> {
   late Box<Product> productBox;
 
   final List<Map<String, dynamic>> categories = [
-    {'icon': 'assets/icons/icon-led.png', 'title': 'LEDs'},
-    {'icon': 'assets/icons/icon-wire.png', 'title': 'Wires'},
-    {'icon': 'assets/icons/icon-tools.png', 'title': 'Tools'},
-    {'icon': 'assets/icons/icon-switch.png', 'title': 'Switches'},
-  ];
+  {'icon': 'assets/icons/icon-led.png', 'title': 'LEDs'},
+  {'icon': 'assets/icons/icon-led.png', 'title': 'Bulbs'},
+  {'icon': 'assets/icons/icon-tubelight.png', 'title': 'Tube Lights'},
+  {'icon': 'assets/icons/icon-wire.png', 'title': 'Wires'},
+  {'icon': 'assets/icons/icon-switch.png', 'title': 'Switches'},
+  {'icon': 'assets/icons/icon-socket.png', 'title': 'Sockets'},
+  {'icon': 'assets/icons/icon-mcb.png', 'title': 'MCBs'},
+  {'icon': 'assets/icons/icon-fan.png', 'title': 'Fans'},
+  {'icon': 'assets/icons/icon-pipe.png', 'title': 'Pipes'},
+  {'icon': 'assets/icons/icon-homeappliances.png', 'title': 'Home Appliances'},
+  {'icon': 'assets/icons/icon-tools.png', 'title': 'Tools'},
+  {'icon': 'assets/icons/icon-accessory.png', 'title': 'Accessories'},
+];
+
 
   @override
   void initState() {

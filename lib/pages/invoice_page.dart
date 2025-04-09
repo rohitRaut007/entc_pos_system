@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
 import '../models/invoice_data.dart';
+import '../models/order_item.dart';
+import '../models/sale_order.dart';
+import '../models/product.dart'; // Import your Product model
 import '../services/pdf_generator.dart';
+import 'package:hive/hive.dart';
 
 class InvoicePage extends StatefulWidget {
   final InvoiceData invoiceData;
@@ -16,24 +21,117 @@ class InvoicePage extends StatefulWidget {
 }
 
 class _InvoicePageState extends State<InvoicePage> {
-  bool isQuotation = true; // Sync with the invoice data
+  bool isQuotation = true;
+  final TextEditingController _paidAmountController = TextEditingController();
+  double creditAmount = 0.0;
+  bool isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    isQuotation = widget.invoiceData.isQuotation; // Initialize based on passed data
+    isQuotation = widget.invoiceData.isQuotation;
   }
+
+  double get subtotal => widget.invoiceData.items.fold(0, (sum, item) => sum + item.total);
+  double get gstTotal => widget.invoiceData.items.fold(0, (sum, item) => sum + item.gstAmount);
+  double get totalAmount => subtotal + (isQuotation ? 0.0 : gstTotal);
 
   void _toggleInvoiceType(bool value) {
     setState(() {
       isQuotation = value;
       final updatedItems = widget.invoiceData.items.map((item) => item.copyWith(
-            gstRate: isQuotation ? 0.0 : 18.0, // Update GST rate based on toggle
+            gstRate: isQuotation ? 0.0 : 18.0,
           )).toList();
-      widget.invoiceData.items.clear();
-      widget.invoiceData.items.addAll(updatedItems);
-      widget.invoiceData.isQuotation = isQuotation; // Update the invoice data
+      widget.invoiceData.items
+        ..clear()
+        ..addAll(updatedItems);
+      widget.invoiceData.isQuotation = isQuotation;
     });
+  }
+
+  Future<void> _confirmAndSaveOrder() async {
+    FocusScope.of(context).unfocus();
+
+    if (_paidAmountController.text.trim().isEmpty) {
+      _showError("Please enter paid amount.");
+      return;
+    }
+
+    final paid = double.tryParse(_paidAmountController.text.trim());
+    if (paid == null || paid < 0) {
+      _showError("Invalid paid amount.");
+      return;
+    }
+
+    if (paid > totalAmount) {
+      _showError("Paid amount cannot be more than total.");
+      return;
+    }
+
+    setState(() => isSaving = true);
+    creditAmount = totalAmount - paid;
+
+    final items = widget.invoiceData.items.map((item) => OrderItem(
+          productName: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        )).toList();
+
+    final now = DateTime.now();
+    final saleOrder = SaleOrder(
+      id: now.millisecondsSinceEpoch.toString(),
+      date: DateFormat('yyyy-MM-dd').format(now),
+      time: DateFormat('HH:mm:ss').format(now),
+      customerName: widget.invoiceData.buyerName,
+      customerMobile: widget.invoiceData.buyerMobile,
+      items: items,
+      orderAmount: totalAmount,
+      transactionId: now.microsecondsSinceEpoch.toString(),
+      transactionSynced: false,
+      transactionDateTime: now,
+      paymentMethod: 'Cash',
+      paymentStatus: creditAmount > 0 ? 'Credit' : 'Paid',
+      paidAmount: paid,
+      creditAmount: creditAmount,
+    );
+
+    // Save sale
+    final salesBox = await Hive.openBox<SaleOrder>('sales');
+    await salesBox.add(saleOrder);
+
+    // Update product stock
+    final productBox = await Hive.openBox<Product>('products');
+    for (var item in widget.invoiceData.items) {
+      final index = productBox.values.toList().indexWhere((p) => p.name == item.name);
+      if (index != -1) {
+        final product = productBox.getAt(index);
+        if (product != null) {
+          final updatedQty = (product.quantity - item.quantity).clamp(0, double.infinity).toInt();
+          final updatedProduct = product.copyWith(quantity: updatedQty);
+          await productBox.putAt(index, updatedProduct);
+        }
+      }
+    }
+
+    if (!mounted) return;
+    Navigator.pop(context);
+  }
+
+  void _showError(String msg) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(msg),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _paidAmountController.dispose();
+    super.dispose();
   }
 
   @override
@@ -83,6 +181,17 @@ class _InvoicePageState extends State<InvoicePage> {
               ],
             ),
             const SizedBox(height: 20),
+            TextField(
+              controller: _paidAmountController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: "Paid Amount",
+                labelStyle: const TextStyle(color: Colors.white),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              style: const TextStyle(color: Colors.white),
+            ),
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               icon: const Icon(Icons.picture_as_pdf),
               label: const Text("Generate PDF"),
@@ -96,6 +205,17 @@ class _InvoicePageState extends State<InvoicePage> {
                   )),
                 );
               },
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.check_circle_outline),
+              label: isSaving ? const Text("Saving...") : const Text("Confirm Order"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+              ),
+              onPressed: isSaving ? null : _confirmAndSaveOrder,
             ),
           ],
         ),
@@ -138,9 +258,6 @@ class _InvoicePageState extends State<InvoicePage> {
 
   Widget _productDetailCard(BuildContext context) {
     final invoiceData = widget.invoiceData;
-    double subtotal = invoiceData.items.fold(0, (sum, item) => sum + item.total);
-    double gstTotal = invoiceData.items.fold(0, (sum, item) => sum + item.gstAmount);
-
     return Card(
       color: const Color(0xff1f2029),
       child: Padding(
@@ -157,7 +274,7 @@ class _InvoicePageState extends State<InvoicePage> {
             const Divider(color: Colors.grey),
             _infoRow(context, "Subtotal", CurrencyFormatter.format(subtotal)),
             if (!isQuotation) _infoRow(context, "GST", CurrencyFormatter.format(gstTotal)),
-            _infoRow(context, "Total Amount", CurrencyFormatter.format(subtotal + (isQuotation ? 0 : gstTotal))),
+            _infoRow(context, "Total Amount", CurrencyFormatter.format(totalAmount)),
           ],
         ),
       ),

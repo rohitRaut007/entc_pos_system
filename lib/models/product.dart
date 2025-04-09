@@ -26,4 +26,21 @@ class Product extends HiveObject {
     required this.category,
     required this.imagePath,
   });
+
+   Product copyWith({
+    String? name,
+    double? price,
+    int? quantity,
+    String? category,
+    String? imagePath,
+  }) {
+    return Product(
+      name: name ?? this.name,
+      price: price ?? this.price,
+      quantity: quantity ?? this.quantity,
+      category: category ?? this.category,
+      imagePath: imagePath ?? this.imagePath,
+    );
+  }
+
 }

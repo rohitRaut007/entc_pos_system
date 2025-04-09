@@ -22,11 +22,20 @@ class _HomePageState extends State<HomePage> {
   String searchQuery = "";
 
   final List<Map<String, dynamic>> categories = [
-    {'icon': 'assets/icons/icon-led.png', 'title': 'LEDs'},
-    {'icon': 'assets/icons/icon-wire.png', 'title': 'Wires'},
-    {'icon': 'assets/icons/icon-tools.png', 'title': 'Tools'},
-    {'icon': 'assets/icons/icon-switch.png', 'title': 'Switches'},
-  ];
+  {'icon': 'assets/icons/icon-led.png', 'title': 'LEDs'},
+  {'icon': 'assets/icons/icon-led.png', 'title': 'Bulbs'},
+  {'icon': 'assets/icons/icon-tubelight.png', 'title': 'Tube Lights'},
+  {'icon': 'assets/icons/icon-wire.png', 'title': 'Wires'},
+  {'icon': 'assets/icons/icon-switch.png', 'title': 'Switches'},
+  {'icon': 'assets/icons/icon-socket.png', 'title': 'Sockets'},
+  {'icon': 'assets/icons/icon-mcb.png', 'title': 'MCBs'},
+  {'icon': 'assets/icons/icon-fan.png', 'title': 'Fans'},
+  {'icon': 'assets/icons/icon-pipe.png', 'title': 'Pipes'},
+  {'icon': 'assets/icons/icon-homeappliances.png', 'title': 'Home Appliances'},
+  {'icon': 'assets/icons/icon-tools.png', 'title': 'Tools'},
+  {'icon': 'assets/icons/icon-accessory.png', 'title': 'Accessories'},
+];
+
 
   final List<Map<String, dynamic>> orderItems = [];
 
@@ -116,15 +125,21 @@ class _HomePageState extends State<HomePage> {
     return ValueListenableBuilder(
       valueListenable: HiveService.productsBox.listenable(),
       builder: (context, Box<Product> box, _) {
-        final products = box.values.map((p) {
-          return Product(
-            name: p.name is String ? p.name : p.name.toString(), // Force to String
-            imagePath: p.imagePath,
-            price: p.price.toDouble(),
-            category: p.category,
-            quantity: p.quantity,
-          );
-        }).toList();
+        final selectedCategory = categories[activeTabIndex]['title'];
+
+        final products = box.values
+          .where((p) =>
+              p.category == selectedCategory &&
+              p.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              p.category.toLowerCase().contains(searchQuery.toLowerCase()))
+          .map((p) => Product(
+                name: p.name.toString(),
+                imagePath: p.imagePath,
+                price: p.price.toDouble(),
+                category: p.category,
+                quantity: p.quantity,
+              ))
+          .toList();
 
         return Row(
           children: [

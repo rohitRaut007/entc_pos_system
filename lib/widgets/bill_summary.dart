@@ -65,7 +65,7 @@ class _BillSummaryState extends State<BillSummary> {
     setState(() => isPrinting = true);
 
     try {
-      await _saveOrderToSales();
+      // await _saveOrderToSales();
       final invoice = await _generateInvoiceData();
 
       widget.onOrderCompleted(); // Clear the order after saving
@@ -88,33 +88,35 @@ class _BillSummaryState extends State<BillSummary> {
     }
   }
 
-  Future<void> _saveOrderToSales() async {
-  final orderItems = widget.orderItems.map((item) => OrderItem(
-    productName: item['title'].toString(),
-    quantity: item['quantity'] as int,
-    price: item['price'] as double,
-  )).toList();
+//   Future<void> _saveOrderToSales() async {
+//   final orderItems = widget.orderItems.map((item) => OrderItem(
+//     productName: item['title'].toString(),
+//     quantity: item['quantity'] as int,
+//     price: item['price'] as double,
+//   )).toList();
 
-  final now = DateTime.now();
+//   final now = DateTime.now();
 
-final saleOrder = SaleOrder(
-  id: now.millisecondsSinceEpoch.toString(),
-  date: DateFormat('yyyy-MM-dd').format(now), // ✅ format to String
-  time: DateFormat('HH:mm:ss').format(now),   // ✅ also format time if needed
-  customerName: _customerNameController.text.trim(),
-  customerMobile: _mobileNumberController.text.trim(),
-  items: orderItems,
-  orderAmount: widget.total,
-  transactionId: now.microsecondsSinceEpoch.toString(),
-  transactionSynced: false,
-  transactionDateTime: now,
-  paymentMethod: 'Cash', // or your logic
-  paymentStatus: 'Unpaid', // or 'Paid' based on your logic
-);
+// final saleOrder = SaleOrder(
+//   id: now.millisecondsSinceEpoch.toString(),
+//   date: DateFormat('yyyy-MM-dd').format(now), // ✅ format to String
+//   time: DateFormat('HH:mm:ss').format(now),   // ✅ also format time if needed
+//   customerName: _customerNameController.text.trim(),
+//   customerMobile: _mobileNumberController.text.trim(),
+//   items: orderItems,
+//   orderAmount: widget.total,
+//   transactionId: now.microsecondsSinceEpoch.toString(),
+//   transactionSynced: false,
+//   transactionDateTime: now,
+//   paymentMethod: 'Cash', // or your logic
+//   paymentStatus: creditAmount > 0 ? 'Credit' : 'Paid',
+//   paidAmount: paid,
+//   creditAmount: creditAmount,
+// );
 
-  final box = await Hive.openBox<SaleOrder>('sales');
-  await box.add(saleOrder);
-}
+//   final box = await Hive.openBox<SaleOrder>('sales');
+//   await box.add(saleOrder);
+// }
 
 
   Future<InvoiceData> _generateInvoiceData() async {

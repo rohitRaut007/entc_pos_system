@@ -14,6 +14,8 @@ class TransactionDetailsPage extends StatelessWidget {
     final cardColor = const Color(0xff1f2028);
     final successColor = Colors.amber;
 
+    final double creditAmount = saleOrder.orderAmount - saleOrder.paidAmount;
+
     return Scaffold(
       backgroundColor: themeColor,
       body: SafeArea(
@@ -52,14 +54,14 @@ class TransactionDetailsPage extends StatelessWidget {
                       children: [
                         Icon(Icons.check_circle_rounded, size: 48, color: successColor),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Payment Successful',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                        Text(
+                          creditAmount > 0 ? 'Partially Paid' : 'Payment Successful',
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Thank you for your order!',
-                          style: TextStyle(fontSize: 14, color: Colors.white54),
+                        Text(
+                          creditAmount > 0 ? 'Balance pending from customer.' : 'Thank you for your order!',
+                          style: const TextStyle(fontSize: 14, color: Colors.white54),
                         ),
                         const SizedBox(height: 12),
                         Container(
@@ -79,15 +81,16 @@ class TransactionDetailsPage extends StatelessWidget {
                             DateFormat('dd-MM-yyyy, HH:mm').format(saleOrder.transactionDateTime)),
                         _buildDetailRow(Icons.person, 'Customer Name', saleOrder.customerName),
                         _buildDetailRow(Icons.phone, 'Mobile Number', saleOrder.customerMobile),
-                        _buildDetailRow(Icons.payments_outlined, 'Payment Method', 'Cash'), // dynamic if needed
+                        _buildDetailRow(Icons.payments_outlined, 'Payment Method', 'Cash'), // optional to make dynamic
                         _buildDetailRow(Icons.confirmation_number, 'Ref Number', saleOrder.transactionId),
 
                         const SizedBox(height: 16),
                         const Divider(thickness: 1, color: Colors.white10),
 
-                        _buildAmountRow('Amount', saleOrder.orderAmount),
-                        _buildAmountRow('Fee', 0),
-                        _buildAmountRow('Total', saleOrder.orderAmount),
+                        _buildAmountRow('Total Amount', saleOrder.orderAmount),
+                        _buildAmountRow('Paid Amount', saleOrder.paidAmount),
+                        if (creditAmount > 0)
+                          _buildAmountRow('Credit Amount', creditAmount),
 
                         const SizedBox(height: 16),
                         const Divider(thickness: 1, color: Colors.white10),

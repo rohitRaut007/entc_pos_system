@@ -1,4 +1,3 @@
-// category_tab.dart
 import 'package:flutter/material.dart';
 
 class CategoryTabs extends StatelessWidget {
@@ -15,27 +14,35 @@ class CategoryTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 50,
+    return SizedBox(
+      height: 60,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
-          print("Rendering category: \$category");
           return GestureDetector(
             onTap: () => onTabChange(index),
             child: Container(
-              margin: const EdgeInsets.only(right: 20),
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
-                color: index == activeTabIndex ? Colors.deepOrange : Colors.grey[800],
+                color: index == activeTabIndex
+                    ? Colors.deepOrange
+                    : const Color(0xff2a2b38),
               ),
               child: Row(
                 children: [
-                  Image.asset(category['icon'], height: 30),
-                  const SizedBox(width: 5),
+                  Image.asset(
+                    category['icon'],
+                    height: 24,
+                    width: 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.image_not_supported, color: Colors.white);
+                    },
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     category['title'],
                     style: TextStyle(

@@ -90,12 +90,19 @@ class _SalesPageState extends State<SalesPage> {
                                       const SizedBox(width: 6),
                                       Text(
                                         sale.customerName,
-                                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                       const Spacer(),
                                       Text(
                                         '₹${sale.orderAmount.toStringAsFixed(2)}',
-                                        style: const TextStyle(color: Colors.greenAccent, fontSize: 16),
+                                        style: const TextStyle(
+                                          color: Colors.greenAccent,
+                                          fontSize: 16,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -104,13 +111,29 @@ class _SalesPageState extends State<SalesPage> {
                                     children: [
                                       const Icon(Icons.phone, color: Colors.white54, size: 16),
                                       const SizedBox(width: 4),
-                                      Text(sale.customerMobile, style: const TextStyle(color: Colors.white54)),
+                                      Text(
+                                        sale.customerMobile,
+                                        style: const TextStyle(color: Colors.white54),
+                                      ),
                                       const Spacer(),
                                       Text(
                                         DateFormat('dd MMM yyyy, hh:mm a').format(sale.transactionDateTime),
                                         style: const TextStyle(color: Colors.white38, fontSize: 12),
                                       ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Chip(
+                                      backgroundColor: sale.paymentStatus == 'Paid'
+                                          ? Colors.green.withOpacity(0.8)
+                                          : Colors.orange.withOpacity(0.8),
+                                      label: Text(
+                                        sale.paymentStatus == 'Paid' ? 'Paid' : 'Credit',
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),

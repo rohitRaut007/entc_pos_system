@@ -43,6 +43,12 @@ class SaleOrder extends HiveObject {
   @HiveField(11, defaultValue: "Unpaid")
   String paymentStatus;
 
+  @HiveField(12, defaultValue: 0.0)
+  double paidAmount;
+
+  @HiveField(13, defaultValue: 0.0)
+  double creditAmount;
+
   String? parkOrderId;
 
   SaleOrder({
@@ -58,6 +64,8 @@ class SaleOrder extends HiveObject {
     required this.transactionDateTime,
     required this.paymentMethod,
     required this.paymentStatus,
+    required this.paidAmount,
+    required this.creditAmount,
     this.parkOrderId = '',
   });
 
@@ -70,10 +78,12 @@ class SaleOrder extends HiveObject {
     List<OrderItem>? items,
     double? orderAmount,
     String? transactionId,
-    String? paymentMethod,
-    String? paymentStatus,
     bool? transactionSynced,
     DateTime? transactionDateTime,
+    String? paymentMethod,
+    String? paymentStatus,
+    double? paidAmount,
+    double? creditAmount,
   }) {
     return SaleOrder(
       id: id ?? this.id,
@@ -84,10 +94,12 @@ class SaleOrder extends HiveObject {
       items: items ?? this.items,
       orderAmount: orderAmount ?? this.orderAmount,
       transactionId: transactionId ?? this.transactionId,
-      paymentMethod: paymentMethod ?? this.paymentMethod,
-      paymentStatus: paymentStatus ?? this.paymentStatus,
       transactionSynced: transactionSynced ?? this.transactionSynced,
       transactionDateTime: transactionDateTime ?? this.transactionDateTime,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      paidAmount: paidAmount ?? this.paidAmount,
+      creditAmount: creditAmount ?? this.creditAmount,
     );
   }
 
@@ -101,10 +113,12 @@ class SaleOrder extends HiveObject {
       'items': items.map((x) => x.toMap()).toList(),
       'orderAmount': orderAmount,
       'transactionId': transactionId,
-      'paymentMethod': paymentMethod,
-      'paymentStatus': paymentStatus,
       'transactionSynced': transactionSynced,
       'transactionDateTime': transactionDateTime.toIso8601String(),
+      'paymentMethod': paymentMethod,
+      'paymentStatus': paymentStatus,
+      'paidAmount': paidAmount,
+      'creditAmount': creditAmount,
     };
   }
 
@@ -118,10 +132,12 @@ class SaleOrder extends HiveObject {
       items: List<OrderItem>.from(map['items']?.map((x) => OrderItem.fromMap(x))),
       orderAmount: map['orderAmount'],
       transactionId: map['transactionId'],
-      paymentMethod: map['paymentMethod'],
-      paymentStatus: map['paymentStatus'],
       transactionSynced: map['transactionSynced'],
       transactionDateTime: DateTime.parse(map['transactionDateTime']),
+      paymentMethod: map['paymentMethod'],
+      paymentStatus: map['paymentStatus'],
+      paidAmount: map['paidAmount'] ?? 0.0,
+      creditAmount: map['creditAmount'] ?? 0.0,
     );
   }
 
@@ -131,7 +147,7 @@ class SaleOrder extends HiveObject {
 
   @override
   String toString() {
-    return 'SaleOrder(id: $id, date: $date, time: $time, customerName: $customerName, customerMobile: $customerMobile, items: $items, orderAmount: $orderAmount, transactionId: $transactionId, transactionSynced: $transactionSynced. transactionDateTime: $transactionDateTime)';
+    return 'SaleOrder(id: $id, date: $date, time: $time, customerName: $customerName, customerMobile: $customerMobile, items: $items, orderAmount: $orderAmount, paidAmount: $paidAmount, creditAmount: $creditAmount, transactionId: $transactionId, transactionSynced: $transactionSynced, transactionDateTime: $transactionDateTime)';
   }
 
   @override
@@ -147,10 +163,12 @@ class SaleOrder extends HiveObject {
       listEquals(other.items, items) &&
       other.orderAmount == orderAmount &&
       other.transactionId == transactionId &&
+      other.transactionSynced == transactionSynced &&
+      other.transactionDateTime.isAtSameMomentAs(transactionDateTime) &&
       other.paymentMethod == paymentMethod &&
       other.paymentStatus == paymentStatus &&
-      other.transactionSynced == transactionSynced &&
-      other.transactionDateTime.isAtSameMomentAs(transactionDateTime);
+      other.paidAmount == paidAmount &&
+      other.creditAmount == creditAmount;
   }
 
   @override
@@ -163,9 +181,11 @@ class SaleOrder extends HiveObject {
       items.hashCode ^
       orderAmount.hashCode ^
       transactionId.hashCode ^
+      transactionSynced.hashCode ^
+      transactionDateTime.hashCode ^
       paymentMethod.hashCode ^
       paymentStatus.hashCode ^
-      transactionSynced.hashCode ^
-      transactionDateTime.hashCode;
+      paidAmount.hashCode ^
+      creditAmount.hashCode;
   }
 }
