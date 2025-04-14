@@ -22,6 +22,7 @@ class _HomePageState extends State<HomePage> {
   String searchQuery = "";
 
   final List<Map<String, dynamic>> categories = [
+  {'icon': 'assets/icons/icon-led.png', 'title': 'All'},
   {'icon': 'assets/icons/icon-led.png', 'title': 'LEDs'},
   {'icon': 'assets/icons/icon-led.png', 'title': 'Bulbs'},
   {'icon': 'assets/icons/icon-tubelight.png', 'title': 'Tube Lights'},
@@ -125,21 +126,22 @@ class _HomePageState extends State<HomePage> {
     return ValueListenableBuilder(
       valueListenable: HiveService.productsBox.listenable(),
       builder: (context, Box<Product> box, _) {
+        
         final selectedCategory = categories[activeTabIndex]['title'];
 
-        final products = box.values
-          .where((p) =>
-              p.category == selectedCategory &&
-              p.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              p.category.toLowerCase().contains(searchQuery.toLowerCase()))
-          .map((p) => Product(
-                name: p.name.toString(),
-                imagePath: p.imagePath,
-                price: p.price.toDouble(),
-                category: p.category,
-                quantity: p.quantity,
-              ))
-          .toList();
+        // Filter logic
+        final products = box.values.where((p) {
+          final matchesCategory = selectedCategory == 'All' || p.category == selectedCategory;
+          final matchesSearch = p.name.toLowerCase().contains(searchQuery.toLowerCase());
+
+          // If search is empty, just filter by category
+          if (searchQuery.isEmpty) return matchesCategory;
+
+          // If search is active, match product name across all categories or selected category
+          return matchesCategory && matchesSearch;
+        }).toList();
+
+
 
         return Row(
           children: [

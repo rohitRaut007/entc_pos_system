@@ -3,10 +3,32 @@ import 'package:intl/intl.dart';
 import '../models/sale_order.dart';
 import '../models/order_item.dart';
 
-class TransactionDetailsPage extends StatelessWidget {
+class TransactionDetailsPage extends StatefulWidget {
   final SaleOrder saleOrder;
 
   const TransactionDetailsPage({super.key, required this.saleOrder});
+
+  @override
+  _TransactionDetailsPageState createState() => _TransactionDetailsPageState();
+}
+
+class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
+  DateTime? settlementDateTime;
+
+  // Method to handle settlement
+ void _settleTransaction() {
+  final now = DateTime.now();
+  setState(() {
+    settlementDateTime = now;
+    widget.saleOrder.paidAmount = widget.saleOrder.orderAmount;
+    widget.saleOrder.creditAmount = 0;
+    widget.saleOrder.settlementDateTime = now; // <- update model
+  });
+
+  // Save to Hive
+  widget.saleOrder.save(); // Assuming it's a HiveObject
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +36,7 @@ class TransactionDetailsPage extends StatelessWidget {
     final cardColor = const Color(0xff1f2028);
     final successColor = Colors.amber;
 
-    final double creditAmount = saleOrder.orderAmount - saleOrder.paidAmount;
+    final double creditAmount = widget.saleOrder.orderAmount - widget.saleOrder.paidAmount;
 
     return Scaffold(
       backgroundColor: themeColor,
@@ -71,26 +93,52 @@ class TransactionDetailsPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '#${saleOrder.transactionId}',
+                            '#${widget.saleOrder.transactionId}',
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
                         const Divider(height: 32, thickness: 1, color: Colors.white10),
 
                         _buildDetailRow(Icons.calendar_today, 'Time / Date',
-                            DateFormat('dd-MM-yyyy, HH:mm').format(saleOrder.transactionDateTime)),
-                        _buildDetailRow(Icons.person, 'Customer Name', saleOrder.customerName),
-                        _buildDetailRow(Icons.phone, 'Mobile Number', saleOrder.customerMobile),
+                            DateFormat('dd-MM-yyyy, HH:mm').format(widget.saleOrder.transactionDateTime)),
+                        _buildDetailRow(Icons.person, 'Customer Name', widget.saleOrder.customerName),
+                        _buildDetailRow(Icons.phone, 'Mobile Number', widget.saleOrder.customerMobile),
                         _buildDetailRow(Icons.payments_outlined, 'Payment Method', 'Cash'), // optional to make dynamic
-                        _buildDetailRow(Icons.confirmation_number, 'Ref Number', saleOrder.transactionId),
+                        _buildDetailRow(Icons.confirmation_number, 'Ref Number', widget.saleOrder.transactionId),
 
                         const SizedBox(height: 16),
                         const Divider(thickness: 1, color: Colors.white10),
 
-                        _buildAmountRow('Total Amount', saleOrder.orderAmount),
-                        _buildAmountRow('Paid Amount', saleOrder.paidAmount),
+                        _buildAmountRow('Total Amount', widget.saleOrder.orderAmount),
+                        _buildAmountRow('Paid Amount', widget.saleOrder.paidAmount),
                         if (creditAmount > 0)
                           _buildAmountRow('Credit Amount', creditAmount),
+
+                        // Settlement Button for Credit Transactions
+                        if (creditAmount > 0) ...[
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _settleTransaction,
+                            child: const Text('Settle Remaining Amount'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 16),
+                        const Divider(thickness: 1, color: Colors.white10),
+
+                        // Settlement Date/Time Display
+                        if (widget.saleOrder.settlementDateTime != null)
+                          _buildDetailRow(
+                            Icons.access_time,
+                            'Settlement Time',
+                            DateFormat('dd-MM-yyyy, HH:mm').format(widget.saleOrder.settlementDateTime!),
+                          ),
+
 
                         const SizedBox(height: 16),
                         const Divider(thickness: 1, color: Colors.white10),
@@ -103,7 +151,7 @@ class TransactionDetailsPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        ...saleOrder.items.map((item) => Padding(
+                        ...widget.saleOrder.items.map((item) => Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

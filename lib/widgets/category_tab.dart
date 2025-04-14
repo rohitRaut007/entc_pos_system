@@ -21,6 +21,8 @@ class CategoryTabs extends StatelessWidget {
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
+          final isActive = index == activeTabIndex;
+
           return GestureDetector(
             onTap: () => onTabChange(index),
             child: Container(
@@ -28,9 +30,12 @@ class CategoryTabs extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
-                color: index == activeTabIndex
+                color: isActive
                     ? Colors.deepOrange
-                    : const Color(0xff2a2b38),
+                    : const Color(0xff2a2b38).withOpacity(0.8),
+                border: isActive
+                    ? null
+                    : Border.all(color: Colors.white24, width: 1),
               ),
               child: Row(
                 children: [
@@ -38,16 +43,18 @@ class CategoryTabs extends StatelessWidget {
                     category['icon'],
                     height: 24,
                     width: 24,
+                    color: isActive ? Colors.white : Colors.white70,
                     errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.image_not_supported, color: Colors.white);
+                      return Icon(Icons.image_not_supported,
+                          color: isActive ? Colors.white : Colors.white70);
                     },
                   ),
                   const SizedBox(width: 8),
                   Text(
                     category['title'],
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: index == activeTabIndex ? FontWeight.bold : FontWeight.normal,
+                      color: isActive ? Colors.white : Colors.white70,
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.w400,
                     ),
                   ),
                 ],

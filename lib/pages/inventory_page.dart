@@ -22,6 +22,7 @@ class _InventoryPageState extends State<InventoryPage> {
     final workbook = excel.Workbook();
     final sheet = workbook.worksheets.addWithName('Inventory');
 
+    // Headers
     sheet.getRangeByName('A1').setText('Product Name');
     sheet.getRangeByName('B1').setText('Category');
     sheet.getRangeByName('C1').setText('Price');
@@ -59,10 +60,49 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 
-  void _editProduct(int key, Product updatedProduct) {
-    Hive.box<Product>('products').put(key, updatedProduct);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Product updated successfully.')),
+  void _editProductDialog(int key, Product product) {
+    final nameController = TextEditingController(text: product.name);
+    final priceController = TextEditingController(text: product.price.toString());
+    final quantityController = TextEditingController(text: product.quantity.toString());
+    final categoryController = TextEditingController(text: product.category);
+    final imagePathController = TextEditingController(text: product.imagePath);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Product'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
+              TextField(controller: priceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Price')),
+              TextField(controller: quantityController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Quantity')),
+              TextField(controller: categoryController, decoration: const InputDecoration(labelText: 'Category')),
+              TextField(controller: imagePathController, decoration: const InputDecoration(labelText: 'Image Path')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final updatedProduct = Product(
+                name: nameController.text,
+                price: double.tryParse(priceController.text) ?? 0.0,
+                quantity: int.tryParse(quantityController.text) ?? 0,
+                category: categoryController.text,
+                imagePath: imagePathController.text,
+              );
+              Hive.box<Product>('products').put(key, updatedProduct);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Product updated successfully.')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -84,7 +124,6 @@ class _InventoryPageState extends State<InventoryPage> {
       ),
       body: Column(
         children: [
-          // Search bar
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -152,7 +191,7 @@ class _InventoryPageState extends State<InventoryPage> {
                               motion: const ScrollMotion(),
                               children: [
                                 SlidableAction(
-                                  onPressed: (_) => _editProduct(key, product),
+                                  onPressed: (_) => _editProductDialog(key, product),
                                   backgroundColor: Colors.blue,
                                   foregroundColor: Colors.white,
                                   icon: Icons.edit,
@@ -174,11 +213,22 @@ class _InventoryPageState extends State<InventoryPage> {
                                   child: Text('${product.quantity}'),
                                 ),
                                 title: Text(product.name),
-                                subtitle: Text(
-                                    '${product.category} - ₹${product.price.toStringAsFixed(2)}'),
-                                trailing: product.quantity < 5
-                                    ? const Icon(Icons.warning, color: Colors.orange)
-                                    : null,
+                                subtitle: Text('${product.category} - ₹${product.price.toStringAsFixed(2)}'),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (product.quantity < 5)
+                                      const Icon(Icons.warning, color: Colors.orange),
+                                    const SizedBox(width: 8),
+                                    if (product.imagePath.isNotEmpty && File(product.imagePath).existsSync())
+                                      Image.file(
+                                        File(product.imagePath),
+                                        height: 40,
+                                        width: 40,
+                                        fit: BoxFit.cover,
+                                      )
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -199,8 +249,10 @@ class _InventoryPageState extends State<InventoryPage> {
 Future<Directory?> getDownloadsDirectory() async {
   if (Platform.isWindows) {
     return Directory('${Platform.environment['USERPROFILE']}\\Downloads');
-  } else if (Platform.isLinux || Platform.isMacOS) {
-    return Directory('/home/${Platform.environment['USER']}');
+  } else if (Platform.isLinux) {
+    return Directory('/home/${Platform.environment['USER']}/Downloads');
+  } else if (Platform.isMacOS) {
+    return Directory('/Users/${Platform.environment['USER']}/Downloads');
   } else {
     return getApplicationDocumentsDirectory();
   }

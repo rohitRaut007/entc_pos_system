@@ -47,8 +47,8 @@ Future<Uint8List> generateInvoicePdf(InvoiceData invoice) async {
         pw.SizedBox(height: 20),
 
         pw.Text(
-          invoice.isQuotation ? 'Quotation' : 'Tax Invoice',
-          style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+          invoice.isQuotation ? 'Memo' : 'Tax Invoice',
+          style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.normal),
         ),
 
         pw.SizedBox(height: 12),

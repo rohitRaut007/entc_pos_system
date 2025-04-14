@@ -125,16 +125,30 @@ class _SalesPageState extends State<SalesPage> {
                                   const SizedBox(height: 8),
                                   Align(
                                     alignment: Alignment.centerRight,
-                                    child: Chip(
-                                      backgroundColor: sale.paymentStatus == 'Paid'
-                                          ? Colors.green.withOpacity(0.8)
-                                          : Colors.orange.withOpacity(0.8),
-                                      label: Text(
-                                        sale.paymentStatus == 'Paid' ? 'Paid' : 'Credit',
-                                        style: const TextStyle(color: Colors.white),
+                                    child: Tooltip(
+                                      message: sale.isSettled == true
+                                          ? 'Transaction is settled'
+                                          : sale.paymentStatus == 'Paid'
+                                              ? 'Fully paid but not marked settled'
+                                              : 'Credit remaining',
+                                      child: Chip(
+                                        backgroundColor: (sale.isSettled)
+                                            ? Colors.blueAccent
+                                            : sale.paymentStatus == 'Paid'
+                                                ? Colors.green.withOpacity(0.8)
+                                                : Colors.orange.withOpacity(0.8),
+                                        label: Text(
+                                          (sale.isSettled)
+                                              ? 'Settled'
+                                              : sale.paymentStatus == 'Paid'
+                                                  ? 'Paid'
+                                                  : 'Credit',
+                                          style: const TextStyle(color: Colors.white),
+                                        ),
                                       ),
                                     ),
                                   ),
+
                                 ],
                               ),
                             ),
@@ -159,18 +173,29 @@ class _SalesPageState extends State<SalesPage> {
         children: [
           // Search Field
           SizedBox(
-            width: 180,
+            width: 200,
             child: TextField(
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Search name/mobile',
-                hintStyle: TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Color(0xff1f1f29),
-                isDense: true,
-                border: OutlineInputBorder(borderSide: BorderSide.none),
-              ),
               onChanged: (value) => setState(() => _searchQuery = value),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white54),
+                        onPressed: () => setState(() => _searchQuery = ''),
+                      )
+                    : null,
+                hintText: 'Search name or mobile',
+                hintStyle: const TextStyle(color: Colors.white54),
+                filled: true,
+                fillColor: const Color(0xff1f1f29),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
             ),
           ),
 
@@ -197,7 +222,7 @@ class _SalesPageState extends State<SalesPage> {
             },
           ),
 
-          // Sort Option
+          // Sort Dropdown
           DropdownButton<String>(
             dropdownColor: const Color(0xff1f1f29),
             value: _sortOption,
@@ -210,7 +235,7 @@ class _SalesPageState extends State<SalesPage> {
             onChanged: (value) => setState(() => _sortOption = value!),
           ),
 
-          // Clear Button
+          // Clear Filters
           TextButton(
             onPressed: () {
               setState(() {
