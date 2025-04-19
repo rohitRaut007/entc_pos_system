@@ -147,7 +147,6 @@ class _InventoryPageState extends State<InventoryPage> {
               },
             ),
           ),
-
           Expanded(
             child: ValueListenableBuilder(
               valueListenable: Hive.box<Product>('products').listenable(),
@@ -214,6 +213,7 @@ class _InventoryPageState extends State<InventoryPage> {
                                 ),
                                 title: Text(product.name),
                                 subtitle: Text('${product.category} - ₹${product.price.toStringAsFixed(2)}'),
+                                // Arrow removed from trailing
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -226,7 +226,7 @@ class _InventoryPageState extends State<InventoryPage> {
                                         height: 40,
                                         width: 40,
                                         fit: BoxFit.cover,
-                                      )
+                                      ),
                                   ],
                                 ),
                               ),

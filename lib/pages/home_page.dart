@@ -172,6 +172,7 @@ class _HomePageState extends State<HomePage> {
                           image: product.imagePath,
                           title: product.name,
                           price: product.price,
+                          stockQuantity: product.quantity, // Pass the product's stock quantity
                           onTap: () => promptForQuantity(product),
                         );
                       },

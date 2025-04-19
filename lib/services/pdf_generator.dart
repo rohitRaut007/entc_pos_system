@@ -24,25 +24,26 @@ Future<Uint8List> generateInvoicePdf(InvoiceData invoice) async {
   pdf.addPage(
     pw.MultiPage(
       build: (context) => [
-        // Business Info Header
-        pw.Center(
-          child: pw.Column(
-            children: [
-              pw.Text(
-                'TUSHAR ENTERPRISES',
-                style: pw.TextStyle(
-                  fontSize: 20,
-                  fontWeight: pw.FontWeight.bold,
+        // Business Info Header (Only for Tax Invoice)
+        if (!invoice.isQuotation)
+          pw.Center(
+            child: pw.Column(
+              children: [
+                pw.Text(
+                  'TUSHAR ENTERPRISES',
+                  style: pw.TextStyle(
+                    fontSize: 20,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text('SHOP NO.1 BHARAT NAGAR'),
-              pw.Text('PISADEVI, CHHATRAPATI SAMBHAJI NAGAR'),
-              pw.Text('431008'),
-              pw.Text('Contact : 8329941680, 7767998998'),
-            ],
+                pw.SizedBox(height: 4),
+                pw.Text('SHOP NO.1 BHARAT NAGAR'),
+                pw.Text('PISADEVI, CHHATRAPATI SAMBHAJI NAGAR'),
+                pw.Text('431008'),
+                pw.Text('Contact : 8329941680, 7767998998'),
+              ],
+            ),
           ),
-        ),
 
         pw.SizedBox(height: 20),
 
