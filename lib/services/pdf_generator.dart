@@ -41,9 +41,19 @@ Future<Uint8List> generateInvoicePdf(InvoiceData invoice) async {
                 pw.Text('PISADEVI, CHHATRAPATI SAMBHAJI NAGAR'),
                 pw.Text('431008'),
                 pw.Text('Contact : 8329941680, 7767998998'),
+                pw.SizedBox(height: 8),
+                pw.Divider(color: PdfColors.black),  // Adding the line below the business header
               ],
             ),
           ),
+
+        // Date on the Right
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.end,
+          children: [
+            pw.Text('Date: ${dateFormat.format(invoice.date)}', style: pw.TextStyle(fontSize: 12)),
+          ],
+        ),
 
         pw.SizedBox(height: 20),
 

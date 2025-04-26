@@ -58,6 +58,9 @@ class SaleOrder extends HiveObject {
   @HiveField(16)
   DateTime? settlementDateTime;
 
+  @HiveField(17, defaultValue: "")
+  String gstin; // ✅ Added GSTIN field as optional
+
   SaleOrder({
     required this.id,
     required this.date,
@@ -76,6 +79,7 @@ class SaleOrder extends HiveObject {
     this.isSettled = false,
     this.parkOrderId = '',
     this.settlementDateTime,
+    this.gstin = 'NA', // ✅ Default empty
   });
 
   SaleOrder copyWith({
@@ -96,6 +100,7 @@ class SaleOrder extends HiveObject {
     bool? isSettled,
     String? parkOrderId,
     DateTime? settlementDateTime,
+    String? gstin,
   }) {
     return SaleOrder(
       id: id ?? this.id,
@@ -115,6 +120,7 @@ class SaleOrder extends HiveObject {
       isSettled: isSettled ?? this.isSettled,
       parkOrderId: parkOrderId ?? this.parkOrderId,
       settlementDateTime: settlementDateTime ?? this.settlementDateTime,
+      gstin: gstin ?? this.gstin,
     );
   }
 
@@ -137,6 +143,7 @@ class SaleOrder extends HiveObject {
       'isSettled': isSettled,
       'parkOrderId': parkOrderId,
       'settlementDateTime': settlementDateTime?.toIso8601String(),
+      'gstin': gstin,
     };
   }
 
@@ -161,6 +168,7 @@ class SaleOrder extends HiveObject {
       settlementDateTime: map['settlementDateTime'] != null
           ? DateTime.parse(map['settlementDateTime'])
           : null,
+      gstin: map['gstin'] ?? '',
     );
   }
 
@@ -170,7 +178,7 @@ class SaleOrder extends HiveObject {
 
   @override
   String toString() {
-    return 'SaleOrder(id: $id, date: $date, time: $time, customerName: $customerName, customerMobile: $customerMobile, items: $items, orderAmount: $orderAmount, paidAmount: $paidAmount, creditAmount: $creditAmount, transactionId: $transactionId, transactionSynced: $transactionSynced, transactionDateTime: $transactionDateTime, isSettled: $isSettled, parkOrderId: $parkOrderId, settlementDateTime: $settlementDateTime)';
+    return 'SaleOrder(id: $id, date: $date, time: $time, customerName: $customerName, customerMobile: $customerMobile, items: $items, orderAmount: $orderAmount, paidAmount: $paidAmount, creditAmount: $creditAmount, transactionId: $transactionId, transactionSynced: $transactionSynced, transactionDateTime: $transactionDateTime, isSettled: $isSettled, parkOrderId: $parkOrderId, settlementDateTime: $settlementDateTime, gstin: $gstin)';
   }
 
   @override
@@ -194,7 +202,8 @@ class SaleOrder extends HiveObject {
         other.creditAmount == creditAmount &&
         other.isSettled == isSettled &&
         other.parkOrderId == parkOrderId &&
-        other.settlementDateTime == settlementDateTime;
+        other.settlementDateTime == settlementDateTime &&
+        other.gstin == gstin;
   }
 
   @override
@@ -215,6 +224,7 @@ class SaleOrder extends HiveObject {
         creditAmount.hashCode ^
         isSettled.hashCode ^
         parkOrderId.hashCode ^
-        settlementDateTime.hashCode;
+        settlementDateTime.hashCode ^
+        gstin.hashCode;
   }
 }

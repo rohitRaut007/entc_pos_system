@@ -23,6 +23,7 @@ class InvoicePage extends StatefulWidget {
 class _InvoicePageState extends State<InvoicePage> {
   bool isQuotation = true;
   final TextEditingController _paidAmountController = TextEditingController();
+  final TextEditingController _gstinController = TextEditingController();
   double creditAmount = 0.0;
   bool isSaving = false;
 
@@ -30,6 +31,7 @@ class _InvoicePageState extends State<InvoicePage> {
   void initState() {
     super.initState();
     isQuotation = widget.invoiceData.isQuotation;
+    _gstinController.text = widget.invoiceData.buyerGst; // Set existing GST if available
   }
 
   double get subtotal => widget.invoiceData.items.fold(0, (sum, item) => sum + item.total);
@@ -131,6 +133,7 @@ class _InvoicePageState extends State<InvoicePage> {
   @override
   void dispose() {
     _paidAmountController.dispose();
+    _gstinController.dispose();
     super.dispose();
   }
 
@@ -150,6 +153,7 @@ class _InvoicePageState extends State<InvoicePage> {
               Printing.layoutPdf(
                 onLayout: (_) => generateInvoicePdf(invoiceData.copyWith(
                   isQuotation: isQuotation,
+                  buyerGst: _gstinController.text.trim(), // Save updated GSTIN before printing
                   items: invoiceData.items.map((item) => item.copyWith(
                         gstRate: isQuotation ? 0.0 : 18.0,
                       )).toList(),
@@ -182,6 +186,17 @@ class _InvoicePageState extends State<InvoicePage> {
             ),
             const SizedBox(height: 20),
             TextField(
+              controller: _gstinController,
+              keyboardType: TextInputType.text,
+              decoration: InputDecoration(
+                labelText: "Customer GSTIN (optional)",
+                labelStyle: const TextStyle(color: Colors.white),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              style: const TextStyle(color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            TextField(
               controller: _paidAmountController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
@@ -199,6 +214,7 @@ class _InvoicePageState extends State<InvoicePage> {
                 Printing.layoutPdf(
                   onLayout: (_) => generateInvoicePdf(invoiceData.copyWith(
                     isQuotation: isQuotation,
+                    buyerGst: _gstinController.text.trim(),
                     items: invoiceData.items.map((item) => item.copyWith(
                           gstRate: isQuotation ? 0.0 : 18.0,
                         )).toList(),
@@ -249,7 +265,7 @@ class _InvoicePageState extends State<InvoicePage> {
             _infoRow(context, "Date", invoiceData.date.toString().substring(0, 19)),
             _infoRow(context, "Customer Name", invoiceData.buyerName),
             _infoRow(context, "Mobile", invoiceData.buyerMobile),
-            _infoRow(context, "GST No.", invoiceData.buyerGst.isNotEmpty ? invoiceData.buyerGst : '-'),
+            _infoRow(context, "GST No.", _gstinController.text.trim().isNotEmpty ? _gstinController.text.trim() : '-'),
           ],
         ),
       ),
@@ -315,5 +331,5 @@ class _InvoicePageState extends State<InvoicePage> {
 }
 
 class CurrencyFormatter {
-  static String format(double amount) => '₹${amount.toStringAsFixed(2)}';
+  static String format(double amount) => '₹${amount.round()}'; 
 }

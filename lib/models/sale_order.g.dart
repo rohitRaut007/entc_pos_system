@@ -34,13 +34,14 @@ class SaleOrderAdapter extends TypeAdapter<SaleOrder> {
       isSettled: fields[14] == null ? false : fields[14] as bool,
       parkOrderId: fields[15] == null ? '' : fields[15] as String,
       settlementDateTime: fields[16] as DateTime?,
+      gstin: fields[17] == null ? '' : fields[17] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, SaleOrder obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class SaleOrderAdapter extends TypeAdapter<SaleOrder> {
       ..writeByte(15)
       ..write(obj.parkOrderId)
       ..writeByte(16)
-      ..write(obj.settlementDateTime);
+      ..write(obj.settlementDateTime)
+      ..writeByte(17)
+      ..write(obj.gstin);
   }
 
   @override

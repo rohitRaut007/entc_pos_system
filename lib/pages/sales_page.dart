@@ -1,8 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/sale_order.dart';
 import 'transaction_details_page.dart';
 import 'package:intl/intl.dart';
+import 'package:excel/excel.dart';
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' as excel;
+import 'package:file_saver/file_saver.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -46,7 +55,7 @@ class _SalesPageState extends State<SalesPage> {
 
         return Column(
           children: [
-            _buildFilters(context),
+            _buildFilters(context, sales),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
@@ -148,7 +157,6 @@ class _SalesPageState extends State<SalesPage> {
                                       ),
                                     ),
                                   ),
-
                                 ],
                               ),
                             ),
@@ -163,7 +171,7 @@ class _SalesPageState extends State<SalesPage> {
     );
   }
 
-  Widget _buildFilters(BuildContext context) {
+  Widget _buildFilters(BuildContext context, List<SaleOrder> sales) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
       child: Wrap(
@@ -235,6 +243,13 @@ class _SalesPageState extends State<SalesPage> {
             onChanged: (value) => setState(() => _sortOption = value!),
           ),
 
+          // Export to Excel Button
+          ElevatedButton.icon(
+            icon: const Icon(Icons.file_download, size: 18),
+            label: const Text('Export to Excel'),
+            onPressed: () => _exportToExcel(sales),
+          ),
+
           // Clear Filters
           TextButton(
             onPressed: () {
@@ -251,4 +266,54 @@ class _SalesPageState extends State<SalesPage> {
       ),
     );
   }
+
+
+
+Future<void> _exportToExcel(List<SaleOrder> sales) async {
+  // Create a new workbook
+  final workbook = excel.Workbook();
+
+  // Add a worksheet
+  final sheet = workbook.worksheets.addWithName('Sales');
+
+  // Add headers in the first row
+  sheet.getRangeByName('A1').setText('Customer Name');
+  sheet.getRangeByName('B1').setText('Mobile');
+  sheet.getRangeByName('C1').setText('Transaction Date');
+  sheet.getRangeByName('D1').setText('Amount');
+  sheet.getRangeByName('E1').setText('Status');
+
+  // Populate the rows with data
+  for (var i = 0; i < sales.length; i++) {
+    final sale = sales[i];
+    final row = i + 2; // Start from the second row
+
+    // Set data in each cell
+    sheet.getRangeByName('A$row').setText(sale.customerName);
+    sheet.getRangeByName('B$row').setText(sale.customerMobile);
+    sheet.getRangeByName('C$row').setText(DateFormat('dd MMM yyyy, hh:mm a').format(sale.transactionDateTime));
+    sheet.getRangeByName('D$row').setNumber(sale.orderAmount);
+    sheet.getRangeByName('E$row').setText(sale.isSettled ? 'Settled' : sale.paymentStatus);
+  }
+
+  // Save the file to the local directory
+  final directory = await getApplicationDocumentsDirectory();
+  final path = '${directory.path}/sales_report.xlsx';
+  final file = File(path);
+  ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Sales exported to: $path')),
+    );
+
+  // Write the Excel file to disk
+  final List<int> bytes = workbook.saveAsStream();
+  await file.writeAsBytes(bytes);
+
+  // Close the workbook
+  workbook.dispose();
+
+  // Optionally, use FileSaver if you're targeting the web
+  // For mobile, you can use the above file saving method
+  print('Excel file saved at: $path');
+
+}
 }
