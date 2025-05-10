@@ -51,7 +51,7 @@ class _SalesPageState extends State<SalesPage> {
           sales.sort((a, b) => b.orderAmount.compareTo(a.orderAmount));
         }
 
-        final totalSales = sales.fold<double>(0, (sum, item) => sum + item.orderAmount);
+        final totalSales = sales.fold<double>(0, (sum, item) => sum + item.orderAmount.round());
 
         return Column(
           children: [
@@ -59,7 +59,7 @@ class _SalesPageState extends State<SalesPage> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                'Total Sales: ₹${totalSales.toStringAsFixed(2)}',
+                'Total Sales: ₹${totalSales.roundToDouble().toStringAsFixed(2)}',
                 style: const TextStyle(color: Colors.white70, fontSize: 16),
               ),
             ),
@@ -277,11 +277,13 @@ Future<void> _exportToExcel(List<SaleOrder> sales) async {
   final sheet = workbook.worksheets.addWithName('Sales');
 
   // Add headers in the first row
-  sheet.getRangeByName('A1').setText('Customer Name');
-  sheet.getRangeByName('B1').setText('Mobile');
-  sheet.getRangeByName('C1').setText('Transaction Date');
-  sheet.getRangeByName('D1').setText('Amount');
-  sheet.getRangeByName('E1').setText('Status');
+  sheet.getRangeByName('A1').setText('Invoice Name');
+  sheet.getRangeByName('B1').setText('GST Number');
+  sheet.getRangeByName('C1').setText('Customer Name');
+  sheet.getRangeByName('D1').setText('Mobile');
+  sheet.getRangeByName('E1').setText('Transaction Date');
+  sheet.getRangeByName('F1').setText('Amount');
+  sheet.getRangeByName('G1').setText('Status');
 
   // Populate the rows with data
   for (var i = 0; i < sales.length; i++) {
@@ -289,11 +291,13 @@ Future<void> _exportToExcel(List<SaleOrder> sales) async {
     final row = i + 2; // Start from the second row
 
     // Set data in each cell
-    sheet.getRangeByName('A$row').setText(sale.customerName);
-    sheet.getRangeByName('B$row').setText(sale.customerMobile);
-    sheet.getRangeByName('C$row').setText(DateFormat('dd MMM yyyy, hh:mm a').format(sale.transactionDateTime));
-    sheet.getRangeByName('D$row').setNumber(sale.orderAmount);
-    sheet.getRangeByName('E$row').setText(sale.isSettled ? 'Settled' : sale.paymentStatus);
+    sheet.getRangeByName('A$row').setText(sale.id);
+    sheet.getRangeByName('B$row').setText(sale.gstin);
+    sheet.getRangeByName('C$row').setText(sale.customerName);
+    sheet.getRangeByName('D$row').setText(sale.customerMobile);
+    sheet.getRangeByName('E$row').setText(DateFormat('dd MMM yyyy, hh:mm a').format(sale.transactionDateTime));
+    sheet.getRangeByName('F$row').setNumber(sale.orderAmount);
+    sheet.getRangeByName('G$row').setText(sale.isSettled ? 'Settled' : sale.paymentStatus);
   }
 
   // Save the file to the local directory

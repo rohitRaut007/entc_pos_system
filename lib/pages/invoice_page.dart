@@ -1,3 +1,4 @@
+import 'package:entc_pos_system/utils/invoice_number_generator.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +10,7 @@ import '../services/pdf_generator.dart';
 import 'package:hive/hive.dart';
 
 class InvoicePage extends StatefulWidget {
-  final InvoiceData invoiceData;
+  final InvoiceData invoiceData;  
 
   const InvoicePage({
     super.key,
@@ -80,19 +81,23 @@ class _InvoicePageState extends State<InvoicePage> {
         )).toList();
 
     final now = DateTime.now();
+
+    final transactionId = await generateTransactionId();  
+
     final saleOrder = SaleOrder(
-      id: now.millisecondsSinceEpoch.toString(),
+      id: transactionId ,
       date: DateFormat('yyyy-MM-dd').format(now),
       time: DateFormat('HH:mm:ss').format(now),
       customerName: widget.invoiceData.buyerName,
       customerMobile: widget.invoiceData.buyerMobile,
       items: items,
-      orderAmount: totalAmount,
+      gstin: _gstinController.text.trim(), // ✅ Add this line
+      orderAmount: totalAmount.roundToDouble(),
       transactionId: now.microsecondsSinceEpoch.toString(),
       transactionSynced: false,
       transactionDateTime: now,
       paymentMethod: 'Cash',
-      paymentStatus: creditAmount > 0 ? 'Credit' : 'Paid',
+      paymentStatus: creditAmount.round() > 0 ? 'Credit' : 'Paid',
       paidAmount: paid,
       creditAmount: creditAmount,
     );
@@ -333,3 +338,27 @@ class _InvoicePageState extends State<InvoicePage> {
 class CurrencyFormatter {
   static String format(double amount) => '₹${amount.round()}'; 
 }
+
+
+// Future<String> generateTransactionId() async {
+//   final now = DateTime.now();
+//   final year = now.year % 100; // e.g., 2025 → 25
+//   final prYear = year - 1;     // → 24
+//   final Original_month = 5;
+//   final month = now.month.toString().padLeft(2, '0');
+
+//   // Open your Hive box that stores SaleOrders
+//   final saleBox = await Hive.openBox<SaleOrder>('sale_orders');
+
+//   int serial = 1;
+//    // Default if no transaction exists, initialize to 001
+
+//   // Ensure serial is at least 3 digits
+//   final serialStr = serial.toString().padLeft(3, '0');
+
+//   final generatedId = '$prYear$year$month$serialStr';
+//   print("Generated Transaction ID: $generatedId");
+
+//   return generatedId;
+// }
+

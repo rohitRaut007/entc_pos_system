@@ -64,7 +64,7 @@ Future<Uint8List> generateInvoicePdf(InvoiceData invoice) async {
 
         pw.SizedBox(height: 12),
         pw.Text('Invoice No: ${invoice.invoiceNumber}'),
-        pw.Text('Date: ${dateFormat.format(invoice.date)}'),
+        // pw.Text('Date: ${dateFormat.format(invoice.date)}'),
         pw.SizedBox(height: 12),
         pw.Text('Buyer: ${invoice.buyerName}'),
         pw.Text('Mobile: ${invoice.buyerMobile}'),
@@ -106,11 +106,11 @@ Future<Uint8List> generateInvoicePdf(InvoiceData invoice) async {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
-              pw.Text('Subtotal: ₹${subtotal.toStringAsFixed(2)}'),
+              pw.Text('Subtotal: ${subtotal.toStringAsFixed(2)}'),
               if (!invoice.isQuotation)
-                pw.Text('Total GST: ₹${totalGst.toStringAsFixed(2)}'),
+                pw.Text('Total GST: ${totalGst.toStringAsFixed(2)}'),
               pw.Text(
-                'Total Amount: ₹${totalAmount.toStringAsFixed(2)}',
+                'Total Amount: ${totalAmount.toStringAsFixed(2)}',
                 style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               ),
             ],

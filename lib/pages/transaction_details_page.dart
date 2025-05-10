@@ -43,7 +43,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
               ),
             ),
             pw.SizedBox(height: 16),
-            pw.Text('Transaction ID: ${widget.saleOrder.transactionId}'),
+            pw.Text('Transaction ID: ${widget.saleOrder.id}'),
             pw.Text('Date: ${DateFormat('dd-MM-yyyy, HH:mm').format(widget.saleOrder.transactionDateTime)}'),
             pw.Text('Customer Name: ${widget.saleOrder.customerName}'),
             pw.Text('Mobile Number: ${widget.saleOrder.customerMobile}'),
@@ -58,16 +58,16 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Expanded(
-                    child: pw.Text('${item.productName} (${item.quantity} x ₹${item.price.toStringAsFixed(2)})'),
+                    child: pw.Text('${item.productName} (${item.quantity} x ${item.price.toStringAsFixed(2)})'),
                   ),
-                  pw.Text('₹${(item.quantity * item.price).toStringAsFixed(2)}'),
+                  pw.Text(' ${(item.quantity * item.price).toStringAsFixed(2)}'),
                 ],
               ),
             ),
             pw.Divider(),
             pw.SizedBox(height: 8),
-            _buildPdfAmountRow('Total Amount:', widget.saleOrder.orderAmount),
-            _buildPdfAmountRow('Paid Amount:', widget.saleOrder.paidAmount),
+            _buildPdfAmountRow('Total Amount:', widget.saleOrder.orderAmount.roundToDouble()),
+            _buildPdfAmountRow('Paid Amount:', widget.saleOrder.paidAmount.roundToDouble()),
             if (widget.saleOrder.creditAmount > 0)
               _buildPdfAmountRow('Credit Amount:', widget.saleOrder.creditAmount),
             if (widget.saleOrder.settlementDateTime != null)
@@ -85,7 +85,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
         pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-        pw.Text('₹${amount.toStringAsFixed(2)}'),
+        pw.Text(' ${amount.toStringAsFixed(2)}'),
       ],
     );
   }
@@ -191,7 +191,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            '#${widget.saleOrder.transactionId}',
+            '#${widget.saleOrder.id}',
             style: const TextStyle(color: Colors.white),
           ),
         ),
@@ -206,12 +206,15 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       children: [
         _buildDetailRow(Icons.calendar_today, 'Time / Date',
             DateFormat('dd-MM-yyyy, HH:mm').format(widget.saleOrder.transactionDateTime)),
+            
+          // _buildDetailRow(Icons.receipt_long, 'Invoice Number', ''),
+        
         _buildDetailRow(Icons.person, 'Customer Name', widget.saleOrder.customerName),
         _buildDetailRow(Icons.phone, 'Mobile Number', widget.saleOrder.customerMobile),
         _buildDetailRow(Icons.assignment, 'GSTIN',
             widget.saleOrder.gstin.isNotEmpty ? widget.saleOrder.gstin : 'N/A'),
         _buildDetailRow(Icons.payments_outlined, 'Payment Method', 'Cash'),
-        _buildDetailRow(Icons.confirmation_number, 'Ref Number', widget.saleOrder.transactionId),
+        _buildDetailRow(Icons.confirmation_number, 'Invoice Number', widget.saleOrder.id),
         const SizedBox(height: 16),
         const Divider(thickness: 1, color: Colors.white10),
         _buildAmountRow('Total Amount', widget.saleOrder.orderAmount),

@@ -18,10 +18,10 @@ class SideMenu extends StatelessWidget {
       child: Column(
         children: [
           _logo(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 110),
           _menuItem('Home', Icons.home),
           _menuItem('Products', Icons.inventory),
-          _menuItem('Sales', Icons.attach_money),
+          _menuItem('Sales', Icons.show_chart),
           _menuItem('Inventory', Icons.storage),
           _menuItem('Invoice', Icons.picture_as_pdf),
           _menuItem('Settings', Icons.settings),
@@ -38,7 +38,7 @@ class SideMenu extends StatelessWidget {
         color: Colors.blueGrey,
       ),
       child: const Icon(
-        Icons.electrical_services,
+        Icons.electric_bolt,
         color: Colors.white,
         size: 32,
       ),
@@ -49,14 +49,13 @@ class SideMenu extends StatelessWidget {
     return GestureDetector(
       onTap: () => onPageSelected(title),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 13),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
             color: currentPage == title
-                ? Colors.blueGrey
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+                ? Colors.white.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
